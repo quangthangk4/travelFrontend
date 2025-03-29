@@ -1,50 +1,81 @@
-import React from 'react'
-import { NavLink } from 'react-router-dom'
-import { useState } from "react";
-import AuthModal from '../SignInandSignUp/AuthModal';
+import React, { useEffect, useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import axios from "axios";
+import Button from "../Button/Button";
 
 const Header = () => {
-  const [modalOpen, setModalOpen] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
+  const navigate = useNavigate();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Kiểm tra xem có token không
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    setIsAuthenticated(!!token);
+    localStorage.setItem("isAuthenticated", isAuthenticated);
+  }, []);
+
+  // Xử lý logout
+  const handleLogout = async () => {
+    const token = localStorage.getItem("token");
+
+    if (!token) return;
+
+    try {
+      await axios.post("http://localhost:8080/auth/logout", { token });
+
+      // Xóa token sau khi logout thành công
+      localStorage.removeItem("token");
+      setIsAuthenticated(false);
+      alert("đăng xuất thành công!");
+      navigate("/"); // Quay về trang chủ
+      window.location.reload();
+    } catch (error) {
+      console.error("Logout failed:", error.response?.data || error.message);
+      alert("Logout failed. Please try again.");
+    }
+  };
 
   return (
-    <div className='lg:px-15 px-5 flex justify-between items-center py-3 border-b-1 border-b-gray-200 fixed z-50 top-0 left-0 right-0 bg-white'>
-      <NavLink to="/" className='text-[#605dec] font-extrabold text-2xl'>TRIPMA</NavLink>
+    <div className="lg:px-15 px-5 flex justify-between items-center py-3 border-b-1 border-b-gray-200 fixed z-[9999] top-0 left-0 right-0 bg-white">
+      <NavLink to="/" className="text-[#605dec] font-extrabold text-2xl">
+        TRIPMA
+      </NavLink>
       <div className="flex items-center">
-        <NavLink to="/" className="mx-3 hover:text-blue-700">
+        <NavLink to="/flight" className="mx-3 hover:text-blue-700">
           Flights
         </NavLink>
-        <NavLink to="/" className="mx-3 hover:text-blue-700">
-          Hotels
-        </NavLink>
+
+        {isAuthenticated && (
+          <NavLink to="/ticket-history" className="mx-3 hover:text-blue-700">
+            Ticket History
+          </NavLink>
+        )}
         <NavLink to="/" className="mx-3 hover:text-blue-700">
           Packages
         </NavLink>
-        <button className='mx-3 cursor-pointer text-white bg-blue-700 hover:bg-blue-800 focus:ring-1
-         focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600
-          dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800'
-          onClick={() => {
-            setIsSignUp(false);
-            setModalOpen(true);
-          }}
-        >
-          Sign In
-        </button>
-        <button className='mx-3 cursor-pointer text-white bg-blue-700 hover:bg-blue-800 focus:ring-1
-         focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 
-         dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800'
-          onClick={() => {
-            setIsSignUp(true);
-            setModalOpen(true);
-          }}
-        >
-          Sign Up
-        </button>
+
+        {!isAuthenticated ? (
+          <>
+            <div className="mx-3">
+              <Button text={"Sign In"} onClick={() => navigate("/sign-in")} />
+            </div>
+            <div className="ms-3">
+              <Button text={"Sign Up"} onClick={() => navigate("/sign-up")} />
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="mx-3">
+              <Button text={"Profile"} onClick={() => navigate("/profile")} />
+            </div>
+            <div className="ms-3">
+              <Button text={"Logout"} onClick={handleLogout} />
+            </div>
+          </>
+        )}
       </div>
-
-      <AuthModal isOpen={modalOpen} onClose={() => setModalOpen(false)} isSignUp={isSignUp} />
     </div>
-  )
-}
+  );
+};
 
-export default Header
+export default Header;
