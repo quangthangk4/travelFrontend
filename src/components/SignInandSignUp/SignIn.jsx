@@ -3,12 +3,12 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import CryptoJS from "crypto-js";
+import { setAuthWithExpiry } from "../../auth/TtlAuth";
 
 const SignIn = () => {
   const navigate = useNavigate();
 
-  const SECRET_KEY =
-    "pt1z1UzcHGGe+fXQJzq+CxtkApvhq9wKoU3NZOwZWAUi0jmVDZzPZi82vAbmgx4o"; // Nên lưu vào biến môi trường
+  const SECRET_KEY = import.meta.env.VITE_SECRET_KEY;
 
   const decryptPassword = (encryptedPassword) => {
     try {
@@ -28,6 +28,7 @@ const SignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Khi component load, lấy email & password đã lưu (nếu có)
   useEffect(() => {
@@ -66,26 +67,22 @@ const SignIn = () => {
       if (response.data.code === 1000) {
         const token = response.data.result.token;
 
-        // 🔥 Mã hóa mật khẩu trước khi lưu
-        const encryptedPassword = CryptoJS.AES.encrypt(
-          formData.password,
-          SECRET_KEY
-        ).toString();
+        setAuthWithExpiry("token", token, 5 * 60 * 60 * 1000); // lưu trong 5 giờ
 
-        // lưu token vào localStorage
-        localStorage.setItem("token", token);
-
-        // lưu tk,mk đã mã hóa và localStorage
         if (formData.rememberMe) {
+          //  Mã hóa mật khẩu trước khi lưu
+          const encryptedPassword = CryptoJS.AES.encrypt(
+            formData.password,
+            SECRET_KEY
+          ).toString();
           localStorage.setItem("savedEmail", formData.email);
           localStorage.setItem("savedPassword", encryptedPassword);
-        }
-        else {
+        } else {
           localStorage.removeItem("savedEmail");
           localStorage.removeItem("savedPassword");
         }
 
-        localStorage.setItem("isAuthenticated", true);
+        setIsAuthenticated(true);
         alert("Đăng nhập thành công!");
 
         // Chuyển hướng sang homepages
@@ -106,7 +103,7 @@ const SignIn = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto bg-white rounded-lg border-t-1 border-t-gray-100 shadow-lg p-8">
+    <div className="max-w-md mx-auto mt-30 bg-white rounded-lg border-t-1 border-t-gray-100 shadow-lg p-8">
       <h2 className="text-2xl font-bold text-center mb-8 text-gray-800 ">
         Login
       </h2>

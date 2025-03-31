@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Button from "../Button/Button";
+import { getTokenOnly } from "../../auth/TtlAuth";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -9,14 +10,13 @@ const Header = () => {
 
   // Kiểm tra xem có token không
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = getTokenOnly("token");
     setIsAuthenticated(!!token);
-    localStorage.setItem("isAuthenticated", isAuthenticated);
   }, []);
 
   // Xử lý logout
   const handleLogout = async () => {
-    const token = localStorage.getItem("token");
+    const token = getTokenOnly("token");
 
     if (!token) return;
 

@@ -3,6 +3,7 @@ import axios from "axios";
 import { FiEdit2 } from "react-icons/fi";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import { getTokenOnly } from "../auth/TtlAuth";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -22,12 +23,11 @@ const ProfilePage = () => {
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
-        console.log(localStorage.getItem("token"));
         const response = await axios.get(
           "http://localhost:8080/user/getMyInfo",
           {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
+              Authorization: `Bearer ${getTokenOnly("token")}`,
             },
           }
         );
@@ -58,7 +58,7 @@ const ProfilePage = () => {
     try {
       await axios.put("http://localhost:8080/user/update", editedUser, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${getTokenOnly("token")}`,
           "Content-Type": "application/json",
         },
       });

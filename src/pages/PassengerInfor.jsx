@@ -8,6 +8,7 @@ import { resetFlights } from "../store/tripSlice";
 import { useSelector } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
+import { getTokenOnly } from "../auth/TtlAuth";
 
 const FormInfor = ({
   firstName,
@@ -152,7 +153,7 @@ const PassengerInfor = () => {
 
   const fetchUserInfo = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = getTokenOnly("token");
 
       if (!token) {
         alert("Bạn chưa đăng nhập!");
@@ -233,24 +234,24 @@ const PassengerInfor = () => {
         >
           <option
             className="text-gray-900 bg-white"
-            value="7x"
+            value="0"
             defaultValue={""}
           >
             7kg xách tay (0 VND)
           </option>
-          <option className="text-gray-900 bg-white" value="7x21kg">
+          <option className="text-gray-900 bg-white" value="200000">
             7kg xách tay và 21kg kí gửi (200,000 VND)
           </option>
-          <option className="text-gray-900 bg-white" value="12x21kg">
+          <option className="text-gray-900 bg-white" value="230000">
             12kg xách tay và 21kg kí gửi (230,000 VND)
           </option>
-          <option className="text-gray-900 bg-white" value="7x30kg">
+          <option className="text-gray-900 bg-white" value="300000">
             7kg xách tay và 30kg kí gửi (300,000 VND)
           </option>
-          <option className="text-gray-900 bg-white" value="15x30kg">
+          <option className="text-gray-900 bg-white" value="350000">
             15kg xách tay và 30kg kí gửi (350,000 VND)
           </option>
-          <option className="text-gray-900 bg-white" value="15x50kg">
+          <option className="text-gray-900 bg-white" value="500000">
             15kg xách tay và 50kg kí gửi (500,000 VND)
           </option>
         </select>
@@ -258,11 +259,10 @@ const PassengerInfor = () => {
 
       <div className="">
         <BookingInfo
-          button={"Chọn Ghế"}
-          flight={selectedFlight1}
-          flight2={selectedFlight2}
+          flightFrom={selectedFlight1}
+          flightTo={selectedFlight2}
           isRoundTrip={isRoundTrip}
-          luggage={null}
+          luggage={bag}
         />
         <img className="pt-20" src={bagImg} alt="Luggage" />
       </div>
@@ -270,7 +270,13 @@ const PassengerInfor = () => {
       <div className="py-[11px] fixed bottom-0 left-0 right-0 px-15 bg-white border-1 w-full z-8888 flex justify-end pe-50">
         <div className="pe-50">
           <p className="font-semibold">Tổng tiền</p>
-          <p className="font-semibold italic text-2xl">2,322,200 VND</p>
+          <p className="font-semibold italic text-2xl">
+            {(
+              (selectedFlight1?.basePrice || 0) +
+              (selectedFlight2?.basePrice || 0) + Number(bag)
+            ).toLocaleString("vi-VN")}{" "}
+            VND
+          </p>
         </div>
         <Button text={"Đi tiếp"} onClick={handleNext} />
       </div>

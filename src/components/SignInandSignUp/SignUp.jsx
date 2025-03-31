@@ -53,7 +53,9 @@ const SignUp = () => {
         "http://localhost:8080/user/create",
         formData
       );
-      alert("Registration successful! Redirecting to login...");
+      alert("Đăng kí thành công,Chuyển hướng đến trang đăng nhập...");
+
+      // xóa tài khoản mật khẩu đã lưu trước đó
       localStorage.removeItem("savedEmail");
       localStorage.removeItem("savedPassword");
       navigate("/sign-in"); // Điều hướng đến trang đăng nhập

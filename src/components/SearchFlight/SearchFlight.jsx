@@ -9,7 +9,7 @@ import {
 } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { setRoundTrip } from "../../store/tripSlice";
+import { setAirports, setRoundTrip } from "../../store/tripSlice";
 
 const SearchFlight = ({
   defaultFrom,
@@ -30,7 +30,7 @@ const SearchFlight = ({
   const [adults, setAdults] = useState(1);
   const [minors, setMinors] = useState(0);
 
-  const [airports, setAirports] = useState([]);
+  const [airports2, setAirports2] = useState([]);
 
   const inputRef = useRef(null);
   const passengerRef = useRef(null);
@@ -54,7 +54,6 @@ const SearchFlight = ({
       returnDate: returnDate ? formatDate2(returnDate) : "",
     }).toString();
 
-
     navigate(`/flight?${query}`);
     window.location.reload();
   };
@@ -72,7 +71,8 @@ const SearchFlight = ({
       .get("http://localhost:8080/airports/vietnam")
       .then((response) => {
         if (response.data && response.data.result) {
-          setAirports(response.data.result);
+          setAirports2(response.data.result);
+          dispatch(setAirports(response.data.result));
         }
       })
       .catch((error) => console.error("Lỗi khi tải danh sách sân bay:", error));
@@ -125,7 +125,7 @@ const SearchFlight = ({
           <option className="text-gray-900" value="" defaultValue={""} hidden>
             From Where?
           </option>
-          {airports.map((airport) => (
+          {airports2.map((airport) => (
             <option
               className="text-gray-900"
               key={airport.maIATA}
@@ -155,7 +155,7 @@ const SearchFlight = ({
           <option className="" value="" defaultValue={""} hidden>
             Where to?
           </option>
-          {airports.map((airport) => (
+          {airports2.map((airport) => (
             <option
               className="text-gray-900"
               key={airport.maIATA}
