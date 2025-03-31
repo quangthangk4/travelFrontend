@@ -23,11 +23,7 @@ import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import Button from "../components/Button/Button";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  resetFlights,
-  selectDepartFlight,
-  selectReturnFlight,
-} from "../store/tripSlice";
+import { resetFlight, updateFlight } from "../store/tripSlice";
 
 const FlightMap = ({ from, to }) => {
   const [coordinates, setCoordinates] = useState({});
@@ -390,8 +386,8 @@ const Flight = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedFlight, setSelectedFlight] = useState(null);
-  const isRoundTrip = useSelector((state) => state.trip.isRoundTrip); // Lấy trạng thái khứ hồi từ Redux
   const [selectedFlight2, setSelectedFlight2] = useState(null);
+  const flight = useSelector((state) => state.trip.flight);
 
   const [isSecond, setIsSecond] = useState(false);
 
@@ -439,12 +435,11 @@ const Flight = () => {
     setFilteredFlights(data);
   };
 
-  const handleSelectFlight = (flight) => {
+  const handleSelectFlight = (flightLocal) => {
     if (!isSecond) {
-      setSelectedFlight(flight);
-    } else if (isRoundTrip && isSecond) {
-
-      setSelectedFlight2(flight);
+      setSelectedFlight(flightLocal);
+    } else if (flight.isRoundTrip && isSecond) {
+      setSelectedFlight2(flightLocal);
     }
   };
 
@@ -452,7 +447,7 @@ const Flight = () => {
     return () => {
       const keepDataPages = ["/passenger-infor", "/flight"]; // Trang muốn giữ dữ liệu
       if (!keepDataPages.includes(location.pathname)) {
-        dispatch(resetFlights()); // Xóa Redux khi rời khỏi các trang không trong danh sách
+        dispatch(resetFlight()); // Xóa Redux khi rời khỏi các trang không trong danh sách
       }
     };
   }, [location.pathname, dispatch]);
@@ -464,24 +459,33 @@ const Flight = () => {
       return;
     }
 
-    if (!isRoundTrip && selectedFlight) {
-
-      dispatch(selectDepartFlight(selectedFlight));
+    if (!flight.isRoundTrip && selectedFlight) {
+      // dispatch(updateFlight(selectedFlight));
+      dispatch(
+        updateFlight({
+          departFlight: selectedFlight,
+        })
+      );
       navigate("/passenger-infor");
       return;
     }
 
-    if (isRoundTrip) {
+    if (flight.isRoundTrip) {
       if (!isSecond) {
-
-        dispatch(selectDepartFlight(selectedFlight));
+        dispatch(
+          updateFlight({
+            departFlight: selectedFlight,
+          })
+        );
         setIsSecond(true); // Chuyển sang trạng thái chặng 2
       } else if (selectedFlight2) {
-
-        dispatch(selectReturnFlight(selectedFlight2));
+        dispatch(
+          updateFlight({
+            returnFlight: selectedFlight2,
+          })
+        );
         navigate("/passenger-infor");
       } else {
-
         alert("Quý khách chưa chọn vé khứ hồi!");
       }
     }
@@ -546,10 +550,10 @@ const Flight = () => {
             Booking <span className="text-[#605dec] ">information</span>
           </p>
           <BookingInfo
-            button={"Lưu và Điền thông tin cá nhân"}
-            flight={selectedFlight}
-            flight2={selectedFlight2}
-            isRoundTrip={isRoundTrip}
+            flightFrom={selectedFlight}
+            flightTo={selectedFlight2}
+            isRoundTrip={flight.isRoundTrip}
+            luggage={null}
           />
         </div>
       </div>
@@ -561,7 +565,14 @@ const Flight = () => {
       <div className="py-[11px] fixed bottom-0 left-0 right-0 px-15 bg-white border-1 w-full z-[8888] flex justify-end pe-50">
         <div className="pe-50">
           <p className="font-semibold">Tổng tiền</p>
-          <p className="font-semibold italic text-2xl">2,322,200 VND</p>
+          <p className="font-semibold italic text-2xl">
+            {(
+              (selectedFlight?.basePrice || 0) +
+              (selectedFlight2?.basePrice || 0) +
+              Number(0)
+            ).toLocaleString("vi-VN")}{" "}
+            VND
+          </p>
         </div>
         <Button onClick={handleContinue} text={"Đi tiếp"} />
       </div>

@@ -9,7 +9,7 @@ import {
 } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { setRoundTrip } from "../../store/tripSlice";
+import { updateFlight } from "../../store/tripSlice";
 
 const SearchFlight = ({
   defaultFrom,
@@ -22,7 +22,7 @@ const SearchFlight = ({
   const [returnDate, setReturnDate] = useState(defaultReturnDate);
   const [departFrom, setDepartFrom] = useState(defaultFrom);
   const [returnFrom, setReturnFrom] = useState(defaultTo);
-  const isRoundTrip = useSelector((state) => state.trip.isRoundTrip); // Lấy state từ Redux
+  const flight = useSelector((state) => state.trip.flight); // Lấy state từ Redux
 
   const dispatch = useDispatch(); // Lấy dispatch để cập nhật state
   const [isPopupOpen, setIsPopupOpen] = useState(false);
@@ -41,7 +41,7 @@ const SearchFlight = ({
       !departFrom ||
       !returnFrom ||
       !departDate ||
-      (isRoundTrip && !returnDate)
+      (flight.isRoundTrip && !returnDate)
     ) {
       alert("Vui lòng nhập đầy đủ thông tin của chuyến bay!");
       return;
@@ -54,16 +54,23 @@ const SearchFlight = ({
       returnDate: returnDate ? formatDate2(returnDate) : "",
     }).toString();
 
-
     navigate(`/flight?${query}`);
     window.location.reload();
   };
 
   useEffect(() => {
     if (defaultReturnDate) {
-      dispatch(setRoundTrip(true)); // Nếu có returnDate => cập nhật isRoundTrip thành true
+      dispatch(
+        updateFlight({
+          isRoundTrip: true,
+        })
+      ); // Nếu có returnDate => cập nhật isRoundTrip thành true
     } else {
-      dispatch(setRoundTrip(false)); // Không có returnDate => một chiều
+      dispatch(
+        updateFlight({
+          isRoundTrip: false,
+        })
+      ); // Không có returnDate => một chiều
     }
   }, [defaultReturnDate, dispatch]);
 
@@ -175,7 +182,7 @@ const SearchFlight = ({
           type="text"
           readOnly
           value={
-            isRoundTrip
+            flight.isRoundTrip
               ? `${formatDate(departDate)} - ${formatDate(returnDate)}`
               : formatDate(departDate) || ""
           }
@@ -194,8 +201,14 @@ const SearchFlight = ({
                     type="radio"
                     name="tripType"
                     value="oneway"
-                    checked={!isRoundTrip}
-                    onChange={() => dispatch(setRoundTrip(false))}
+                    checked={!flight.isRoundTrip}
+                    onChange={() =>
+                      dispatch(
+                        updateFlight({
+                          isRoundTrip: false,
+                        })
+                      )
+                    }
                   />
                   <span className="font-medium">One way</span>
                 </label>
@@ -204,8 +217,14 @@ const SearchFlight = ({
                     type="radio"
                     name="tripType"
                     value="roundtrip"
-                    checked={isRoundTrip}
-                    onChange={() => dispatch(setRoundTrip(true))}
+                    checked={flight.isRoundTrip}
+                    onChange={() =>
+                      dispatch(
+                        updateFlight({
+                          isRoundTrip: true,
+                        })
+                      )
+                    }
                   />
                   <span className="font-medium">Round trip</span>
                 </label>
@@ -227,7 +246,7 @@ const SearchFlight = ({
                     placeholderText="Chọn ngày đi"
                   />
                 </div>
-                {isRoundTrip && (
+                {flight.isRoundTrip && (
                   <div className="flex flex-col flex-1">
                     <label className="font-medium">Arrival:</label>
                     <DatePicker

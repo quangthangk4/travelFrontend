@@ -3,12 +3,12 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import CryptoJS from "crypto-js";
+import { setAuthWithExpiry } from "../../auth/manageToken";
 
 const SignIn = () => {
   const navigate = useNavigate();
 
-  const SECRET_KEY =
-    "pt1z1UzcHGGe+fXQJzq+CxtkApvhq9wKoU3NZOwZWAUi0jmVDZzPZi82vAbmgx4o"; // Nên lưu vào biến môi trường
+  const SECRET_KEY = import.meta.env.VITE_SECRET_KEY;  // lấy từ biến môi trường  ra
 
   const decryptPassword = (encryptedPassword) => {
     try {
@@ -66,17 +66,17 @@ const SignIn = () => {
       if (response.data.code === 1000) {
         const token = response.data.result.token;
 
-        // 🔥 Mã hóa mật khẩu trước khi lưu
-        const encryptedPassword = CryptoJS.AES.encrypt(
-          formData.password,
-          SECRET_KEY
-        ).toString();
-
-        // lưu token vào localStorage
-        localStorage.setItem("token", token);
-
+        
+        // lưu token vào localStorage với thời hạn 5 tiếng
+        setAuthWithExpiry("token", token, 5* 60 * 60 * 1000);
+        
         // lưu tk,mk đã mã hóa và localStorage
         if (formData.rememberMe) {
+          //  Mã hóa mật khẩu trước khi lưu (nên dùng thuật toán khác cho mạnh:v)
+          const encryptedPassword = CryptoJS.AES.encrypt(
+            formData.password,
+            SECRET_KEY
+          ).toString();
           localStorage.setItem("savedEmail", formData.email);
           localStorage.setItem("savedPassword", encryptedPassword);
         }
@@ -84,8 +84,6 @@ const SignIn = () => {
           localStorage.removeItem("savedEmail");
           localStorage.removeItem("savedPassword");
         }
-
-        localStorage.setItem("isAuthenticated", true);
         alert("Đăng nhập thành công!");
 
         // Chuyển hướng sang homepages

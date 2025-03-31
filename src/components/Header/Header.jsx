@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Button from "../Button/Button";
+import { getAuthWithExpiry } from "../../auth/manageToken";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -9,14 +10,13 @@ const Header = () => {
 
   // Kiểm tra xem có token không
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = getAuthWithExpiry("name");
     setIsAuthenticated(!!token);
-    localStorage.setItem("isAuthenticated", isAuthenticated);
   }, []);
 
   // Xử lý logout
   const handleLogout = async () => {
-    const token = localStorage.getItem("token");
+    const token = getAuthWithExpiry("token");
 
     if (!token) return;
 
@@ -24,7 +24,7 @@ const Header = () => {
       await axios.post("http://localhost:8080/auth/logout", { token });
 
       // Xóa token sau khi logout thành công
-      localStorage.removeItem("token");
+      localStorage.removeItem("token")
       setIsAuthenticated(false);
       alert("đăng xuất thành công!");
       navigate("/"); // Quay về trang chủ

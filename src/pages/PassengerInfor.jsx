@@ -4,7 +4,7 @@ import bagImg from "../assets/images/Luggage.svg";
 import BookingInfo from "../components/BookingInfo/BookingInfo";
 import Button from "../components/Button/Button";
 import InputLable from "../components/Input/InputLable";
-import { resetFlights } from "../store/tripSlice";
+import { resetFlight } from "../store/tripSlice";
 import { useSelector } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
@@ -113,7 +113,7 @@ const PassengerInfor = () => {
     return () => {
       const keepDataPages = ["/passenger-infor", "/flight"]; // Trang muốn giữ dữ liệu
       if (!keepDataPages.includes(location.pathname)) {
-        dispatch(resetFlights()); // Xóa Redux khi rời khỏi các trang không trong danh sách
+        dispatch(resetFlight()); // Xóa Redux khi rời khỏi các trang không trong danh sách
       }
     };
   }, [location.pathname, dispatch]);
@@ -270,7 +270,7 @@ const PassengerInfor = () => {
       <div className="py-[11px] fixed bottom-0 left-0 right-0 px-15 bg-white border-1 w-full z-8888 flex justify-end pe-50">
         <div className="pe-50">
           <p className="font-semibold">Tổng tiền</p>
-          <p className="font-semibold italic text-2xl">2,322,200 VND</p>
+          <p className="font-semibold italic text-2xl"></p>
         </div>
         <Button text={"Đi tiếp"} onClick={handleNext} />
       </div>
