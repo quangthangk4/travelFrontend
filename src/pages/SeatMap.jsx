@@ -3,11 +3,22 @@ import { FaPlane, FaWheelchair, FaChild } from "react-icons/fa";
 import { MdAirlineSeatReclineExtra, MdEventSeat } from "react-icons/md";
 import plane from "../assets/images/plane.png";
 import Button from "../components/Button/Button";
+import { useSelector } from "react-redux";
 
 const SeatMap = () => {
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [passengerCount, setPassengerCount] = useState(1);
   const [totalPrice, setTotalPrice] = useState(0);
+  const flight = useSelector(state => state.trip.flight);
+
+
+  useEffect(() => {
+    try {
+      
+    } catch (error) {
+      
+    }
+  },[])
 
   const seatClasses = {
     first: {
@@ -157,7 +168,7 @@ const SeatMap = () => {
           <h1 className="mt-4 text-3xl font-extrabold text-gray-900">
             Select Your Seats
           </h1>
-          <p className="mt-2 text-gray-600">Total Capacity: 240 Seats</p>
+          <p className="mt-2 text-gray-600">Total Capacity: {flight?.departFlight.totalTickets} Seats</p>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 bg-white rounded-lg shadow-lg overflow-x-hidden overflow-y-scroll max-h-[800px] relative">

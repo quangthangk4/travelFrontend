@@ -1,3 +1,4 @@
+import axios from "axios";
 import "leaflet/dist/leaflet.css";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -8,7 +9,8 @@ import {
   TileLayer,
   useMap,
 } from "react-leaflet";
-import { useSearchParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import avatarAir from "../assets/images/avatarAir.svg";
 import picture2 from "../assets/images/image-1.png";
 import picture3 from "../assets/images/image-2.png";
@@ -16,13 +18,10 @@ import picture1 from "../assets/images/image.png";
 import place1 from "../assets/images/place1.png";
 import place2 from "../assets/images/place2.png";
 import place3 from "../assets/images/place3.png";
+import BookingInfo from "../components/BookingInfo/BookingInfo";
+import Button from "../components/Button/Button";
 import Cart from "../components/Cart/Cart";
 import SearchFlight from "../components/SearchFlight/SearchFlight";
-import BookingInfo from "../components/BookingInfo/BookingInfo";
-import axios from "axios";
-import { useNavigate, useLocation } from "react-router-dom";
-import Button from "../components/Button/Button";
-import { useDispatch, useSelector } from "react-redux";
 import { resetFlight, updateFlight } from "../store/tripSlice";
 
 const FlightMap = ({ from, to }) => {
@@ -292,7 +291,7 @@ const FlightItem = ({ flight, isLast, onSelect }) => {
         </div>
 
         <div className="flex-1 text-end">
-          <p className="text-lg font-semibold">1,000,000 VND</p>
+          <p className="text-lg font-semibold">{flight?.basePrice.toLocaleString("vi-VN")} VND</p>
         </div>
       </div>
     </div>
@@ -448,6 +447,7 @@ const Flight = () => {
       const keepDataPages = ["/passenger-infor", "/flight"]; // Trang muốn giữ dữ liệu
       if (!keepDataPages.includes(location.pathname)) {
         dispatch(resetFlight()); // Xóa Redux khi rời khỏi các trang không trong danh sách
+        console.log("resetFlight");
       }
     };
   }, [location.pathname, dispatch]);
@@ -466,6 +466,7 @@ const Flight = () => {
           departFlight: selectedFlight,
         })
       );
+      console.log("cập nhật flight");
       navigate("/passenger-infor");
       return;
     }

@@ -21,6 +21,9 @@ const tripSlice = createSlice({
     },
     updateFlight: (state, action) => {
       state.flight = { ...state.flight, ...action.payload };
+      if (!state.flight.isRoundTrip && state.flight.returnFlight) {
+        state.flight.returnFlight = {};
+      }
     },
   },
   resetFlight: (state) => {
@@ -35,8 +38,7 @@ const tripSlice = createSlice({
 });
 
 // Export actions để sử dụng trong component
-export const { updateFlight, setAirports, resetFlight } =
-  tripSlice.actions;
+export const { updateFlight, setAirports, resetFlight } = tripSlice.actions;
 
 // Export reducer để đưa vào store
 export default tripSlice.reducer;

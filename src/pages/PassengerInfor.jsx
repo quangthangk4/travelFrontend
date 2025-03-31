@@ -1,13 +1,13 @@
+import axios from "axios";
 import React, { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { useLocation, useNavigate } from "react-router-dom";
 import bagImg from "../assets/images/Luggage.svg";
+import { getAuthWithExpiry } from "../auth/manageToken";
 import BookingInfo from "../components/BookingInfo/BookingInfo";
 import Button from "../components/Button/Button";
 import InputLable from "../components/Input/InputLable";
-import { resetFlight } from "../store/tripSlice";
-import { useSelector } from "react-redux";
-import { useNavigate, useLocation } from "react-router-dom";
-import axios from "axios";
+import { resetFlight, updateFlight } from "../store/tripSlice";
 
 const FormInfor = ({
   firstName,
@@ -93,16 +93,14 @@ const FormInfor = ({
 };
 
 const PassengerInfor = () => {
-  const [bag, setBag] = useState("");
+  const [lugage, setLugage] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [birthday, setBirthday] = useState("");
   const [email, setEmail] = useState("");
   const [CCCD, setCCCD] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const selectedFlight1 = useSelector((state) => state.trip.departFlight);
-  const selectedFlight2 = useSelector((state) => state.trip.returnFlight);
-  const isRoundTrip = useSelector((state) => state.trip.isRoundTrip);
+  const flight = useSelector((state) => state.trip.flight);
   const [userInfo, setUserInfo] = useState(null);
 
   const dispatch = useDispatch();
@@ -147,12 +145,16 @@ const PassengerInfor = () => {
       alert("Vui lòng nhập đầy đủ thông tin hành khách!");
       return;
     }
+
+    dispatch(updateFlight({
+      luggage: lugage,
+    }))
     navigate("/seat-map");
   };
 
   const fetchUserInfo = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = getAuthWithExpiry("token");
 
       if (!token) {
         alert("Bạn chưa đăng nhập!");
@@ -228,29 +230,29 @@ const PassengerInfor = () => {
           dark:border-gray-600 transition-colors
            font-bold bg-[#605dec] text-white rounded-lg focus:rounded-lg
           "
-          value={bag}
-          onChange={(e) => setBag(e.target.value)}
+          value={lugage}
+          onChange={(e) => setLugage(e.target.value)}
         >
           <option
             className="text-gray-900 bg-white"
-            value="7x"
-            defaultValue={""}
+            value="0"
+            defaultValue={"0"}
           >
             7kg xách tay (0 VND)
           </option>
-          <option className="text-gray-900 bg-white" value="7x21kg">
+          <option className="text-gray-900 bg-white" value="200000">
             7kg xách tay và 21kg kí gửi (200,000 VND)
           </option>
-          <option className="text-gray-900 bg-white" value="12x21kg">
+          <option className="text-gray-900 bg-white" value="230000">
             12kg xách tay và 21kg kí gửi (230,000 VND)
           </option>
-          <option className="text-gray-900 bg-white" value="7x30kg">
+          <option className="text-gray-900 bg-white" value="300000">
             7kg xách tay và 30kg kí gửi (300,000 VND)
           </option>
-          <option className="text-gray-900 bg-white" value="15x30kg">
+          <option className="text-gray-900 bg-white" value="350000">
             15kg xách tay và 30kg kí gửi (350,000 VND)
           </option>
-          <option className="text-gray-900 bg-white" value="15x50kg">
+          <option className="text-gray-900 bg-white" value="500000">
             15kg xách tay và 50kg kí gửi (500,000 VND)
           </option>
         </select>
@@ -258,11 +260,10 @@ const PassengerInfor = () => {
 
       <div className="">
         <BookingInfo
-          button={"Chọn Ghế"}
-          flight={selectedFlight1}
-          flight2={selectedFlight2}
-          isRoundTrip={isRoundTrip}
-          luggage={null}
+          flightFrom={flight.departFlight}
+          flightTo={flight.returnFlight}
+          isRoundTrip={flight.isRoundTrip}
+          luggage={lugage}
         />
         <img className="pt-20" src={bagImg} alt="Luggage" />
       </div>
@@ -270,7 +271,14 @@ const PassengerInfor = () => {
       <div className="py-[11px] fixed bottom-0 left-0 right-0 px-15 bg-white border-1 w-full z-8888 flex justify-end pe-50">
         <div className="pe-50">
           <p className="font-semibold">Tổng tiền</p>
-          <p className="font-semibold italic text-2xl"></p>
+          <p className="font-semibold italic text-2xl">
+            {(
+              (flight.departFlight?.basePrice || 0) +
+              (flight.returnFlight?.basePrice || 0) +
+              Number(lugage)
+            ).toLocaleString("vi-VN")}{" "}
+            VND
+          </p>
         </div>
         <Button text={"Đi tiếp"} onClick={handleNext} />
       </div>

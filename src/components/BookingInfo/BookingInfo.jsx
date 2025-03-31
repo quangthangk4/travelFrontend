@@ -7,9 +7,6 @@ const BookingInfo = ({ flightFrom, flightTo, isRoundTrip, luggage }) => {
     useSelector((state) => state.trip.airports) || []
   ); // Lấy trạng danh sách airport từ Redux
 
-  console.log("from: ", flightFrom );
-  console.log("return: ", flightTo );
-
   const [airportFrom, setAirportFrom] = useState(null);
   const [airportTo, setAirportTo] = useState(null);
 
