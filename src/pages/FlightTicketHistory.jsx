@@ -9,30 +9,11 @@ import {
 } from "react-icons/fa";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 const FlightTicketDetail = () => {
-  const ticketData = {
-    user: {
-      fullName: "John Michael Doe",
-      email: "john.doe@example.com",
-      birthday: "1990-05-15",
-    },
-    flight: {
-      number: "BA2467",
-      airline: "Bamboo Airlines",
-      departureAirport: "JFK",
-      arrivalAirport: "LAX",
-      departureTime: "2024-02-20T10:30:00",
-      arrivalTime: "2024-02-20T13:45:00",
-    },
-    ticket: {
-      seatNumber: "12A",
-      bookingDate: "2024-01-15T08:00:00",
-      status: "BOOKED",
-      price: 549.99,
-    },
-  };
-
+  const location = useLocation();
+  const flight = location.state?.flight; // Lấy dữ liệu từ state
   const navigate = useNavigate();
 
   return (
@@ -64,18 +45,15 @@ const FlightTicketDetail = () => {
                 <div className="space-y-2">
                   <p className="text-gray-700">
                     <span className="font-medium">Name:</span>{" "}
-                    {ticketData.user.fullName}
+                    {flight.user.firstName + " " + flight.user.lastName}
                   </p>
                   <p className="text-gray-700">
                     <span className="font-medium">Email:</span>{" "}
-                    {ticketData.user.email}
+                    {flight.user.email}
                   </p>
                   <p className="text-gray-700">
                     <span className="font-medium">Birthday:</span>{" "}
-                    {format(
-                      new Date(ticketData.user.birthday),
-                      "MMMM dd, yyyy"
-                    )}
+                    {format(new Date(flight.user.birthday), "dd/MM/yyyy")}
                   </p>
                 </div>
               </div>
@@ -86,33 +64,30 @@ const FlightTicketDetail = () => {
                   <div className="flex items-center">
                     <FaPlane className="text-blue-600 mr-2" />
                     <span className="font-medium">
-                      {ticketData.flight.number}
+                      {flight.flight.flightNumber}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="text-2xl font-bold">
-                        {ticketData.flight.departureAirport}
+                        {flight.flight.departureAirport}
                       </p>
                       <p className="text-sm text-gray-500">
                         {format(
-                          new Date(ticketData.flight.departureTime),
+                          new Date(flight.flight.departureTime),
                           "h:mm a"
                         )}
                       </p>
                     </div>
                     <div className="flex-1 border-t-2 border-dashed border-gray-300 mx-4 relative">
-                      <FaPlane className="absolute top-1/2 left-1/2 transform -translate-y-1/2 -translate-x-1/2 -rotate-90 text-blue-600" />
+                      <FaPlane className="absolute top-1/2 left-1/2 transform -translate-y-1/2 -translate-x-1/2 text-blue-600" />
                     </div>
                     <div>
                       <p className="text-2xl font-bold">
-                        {ticketData.flight.arrivalAirport}
+                        {flight.flight.arrivalAirport}
                       </p>
                       <p className="text-sm text-gray-500">
-                        {format(
-                          new Date(ticketData.flight.arrivalTime),
-                          "h:mm a"
-                        )}
+                        {format(new Date(flight.flight.arrivalTime), "h:mm a")}
                       </p>
                     </div>
                   </div>
@@ -127,26 +102,23 @@ const FlightTicketDetail = () => {
                   <div className="flex items-center">
                     <FaChair className="text-blue-600 mr-2" />
                     <span className="font-medium">
-                      Seat: {ticketData.ticket.seatNumber}
+                      Seat: {flight.seatNumber}
                     </span>
                   </div>
                   <div className="flex items-center">
                     <FaCalendarAlt className="text-blue-600 mr-2" />
                     <span className="font-medium">
                       Booked:{" "}
-                      {format(
-                        new Date(ticketData.ticket.bookingDate),
-                        "MMMM dd, yyyy"
-                      )}
+                      {format(new Date(flight.bookingDate), "dd/MM/yyyy")}
                     </span>
                   </div>
                   <div className="flex items-center">
                     <span className="px-2 py-1 bg-gray-200 text-gray-700 rounded-full text-sm font-medium">
-                      {ticketData.ticket.status}
+                      {flight.status}
                     </span>
                   </div>
                   <div className="text-xl font-bold text-blue-600">
-                    ${ticketData.ticket.price}
+                    {flight.price.toLocaleString("vi-VN") } VND
                   </div>
                 </div>
               </div>

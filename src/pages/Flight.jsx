@@ -9,6 +9,8 @@ import {
   TileLayer,
   useMap,
 } from "react-leaflet";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import avatarAir from "../assets/images/avatarAir.svg";
@@ -23,6 +25,7 @@ import Button from "../components/Button/Button";
 import Cart from "../components/Cart/Cart";
 import SearchFlight from "../components/SearchFlight/SearchFlight";
 import { resetFlight, updateFlight } from "../store/tripSlice";
+import { getAuthWithExpiry } from "../auth/manageToken";
 
 const FlightMap = ({ from, to }) => {
   const [coordinates, setCoordinates] = useState({});
@@ -41,15 +44,6 @@ const FlightMap = ({ from, to }) => {
       })
       .catch((error) => console.error("Lỗi khi tải danh sách sân bay:", error));
   }, []);
-
-  // const coordinates = {
-  //   NRT: [35.68, 139.76], // Tokyo Narita Airport
-  //   SFO: [37.62, -122.38], // San Francisco Airport
-  //   JFK: [40.64, -73.78], // New York JFK
-  //   LHR: [51.47, -0.45], // London Heathrow
-  //   SGN: [10.82, 106.66], // Tân Sơn Nhất Airport (Vietnam)
-  //   HAN: [21.22, 105.8], // Nội Bài Airport (Vietnam)
-  // };
 
   // Trạng thái vị trí máy bay
   const [planePosition, setPlanePosition] = useState(null);
@@ -240,12 +234,6 @@ const FlightItem = ({ flight, isLast, onSelect }) => {
     return `${hours}h ${minutes}m`; // Định dạng hh:mm
   };
 
-  // const formatTimeRange = (departureTime, arrivalTime) => {
-  //   const depTime = new Date(departureTime);
-  //   const arrTime = new Date(arrivalTime);
-
-  //   return `${formatTime(depTime)} - ${formatTime(arrTime)}`;
-  // };
   const formatTime = (date) => {
     date = new Date(date);
     const hours = String(date.getHours()).padStart(2, "0");
@@ -281,17 +269,14 @@ const FlightItem = ({ flight, isLast, onSelect }) => {
           </p>
         </div>
 
-        {/* <div className="flex-1 text-end">
-          <p>{flight.arrivalAirport}</p>
-          <p>{flight.arrivalTime}</p>
-        </div> */}
-
         <div className="flex-1 text-center">
           <p>Bay thẳng</p>
         </div>
 
         <div className="flex-1 text-end">
-          <p className="text-lg font-semibold">{flight?.basePrice.toLocaleString("vi-VN")} VND</p>
+          <p className="text-lg font-semibold">
+            {flight?.basePrice.toLocaleString("vi-VN")} VND
+          </p>
         </div>
       </div>
     </div>
@@ -399,14 +384,20 @@ const Flight = () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await axios.post(
-          "http://localhost:8080/flight/search",
-          {
+        let response;
+        if (!isSecond) {
+          response = await axios.post("http://localhost:8080/flight/search", {
             departureAirport: from,
             arrivalAirport: to,
             departureDate: departDateString,
-          }
-        );
+          });
+        } else {
+          response = await axios.post("http://localhost:8080/flight/search", {
+            departureAirport: to,
+            arrivalAirport: from,
+            departureDate: returnDateString,
+          });
+        }
 
         setFilteredFlights(response.data.result);
       } catch (err) {
@@ -419,7 +410,7 @@ const Flight = () => {
     if (from && to && departDateString) {
       fetchFlights();
     }
-  }, [from, to, departDateString]); // Thêm dependency để gọi lại API khi thay đổi
+  }, [from, to, departDateString, isSecond]); // Thêm dependency để gọi lại API khi thay đổi
   // Chuyển đổi thành Date (nếu hợp lệ)
   const [departDate, setDepartDate] = useState(
     departDateString ? new Date(departDateString) : null
@@ -442,17 +433,12 @@ const Flight = () => {
     }
   };
 
-  useEffect(() => {
-    return () => {
-      const keepDataPages = ["/passenger-infor", "/flight"]; // Trang muốn giữ dữ liệu
-      if (!keepDataPages.includes(location.pathname)) {
-        dispatch(resetFlight()); // Xóa Redux khi rời khỏi các trang không trong danh sách
-        console.log("resetFlight");
-      }
-    };
-  }, [location.pathname, dispatch]);
-
   const handleContinue = () => {
+    if (!getAuthWithExpiry("token")) {
+      alert("vui lòng đăng nhập để đặt vé");
+      return;
+    }
+
     if (!selectedFlight && !selectedFlight2) {
       alert("Quý khách chưa chọn vé!");
 
@@ -479,6 +465,7 @@ const Flight = () => {
           })
         );
         setIsSecond(true); // Chuyển sang trạng thái chặng 2
+        toast.success("Chọn chuyến đi thành công!");
       } else if (selectedFlight2) {
         dispatch(
           updateFlight({
@@ -512,9 +499,15 @@ const Flight = () => {
       </div>
       <div className="grid grid-cols-3 gap-x-10 mt-12">
         <div className="col-span-2">
-          <p className="text-[#6e7491] font-medium">
-            Choose a <span className="text-[#605dec] ">departing</span> flight
-          </p>
+          {!isSecond ? (
+            <p className="text-[#6e7491] font-medium">
+              Choose a <span className="text-[#605dec] ">departing</span> flight
+            </p>
+          ) : (
+            <p className="text-[#6e7491] font-medium">
+              Choose a <span className="text-[#605dec] ">returning</span> flight
+            </p>
+          )}
 
           {error && (
             <div className="text-center p-5 text-red-500 bg-red-100 border border-red-400 rounded-md">
@@ -555,6 +548,8 @@ const Flight = () => {
             flightTo={selectedFlight2}
             isRoundTrip={flight.isRoundTrip}
             luggage={null}
+            level={null}
+            isSecond={isSecond}
           />
         </div>
       </div>
@@ -577,6 +572,7 @@ const Flight = () => {
         </div>
         <Button onClick={handleContinue} text={"Đi tiếp"} />
       </div>
+      <ToastContainer position="top-right" autoClose={3000} />
     </div>
   );
 };

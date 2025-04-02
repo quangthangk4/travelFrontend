@@ -1,13 +1,15 @@
-import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import bagImg from "../assets/images/Luggage.svg";
 import { getAuthWithExpiry } from "../auth/manageToken";
+import axiosInstance from "../components/Api/axiosClient";
 import BookingInfo from "../components/BookingInfo/BookingInfo";
 import Button from "../components/Button/Button";
 import InputLable from "../components/Input/InputLable";
-import { resetFlight, updateFlight } from "../store/tripSlice";
+import { updateFlight } from "../store/tripSlice";
 
 const FormInfor = ({
   firstName,
@@ -93,7 +95,7 @@ const FormInfor = ({
 };
 
 const PassengerInfor = () => {
-  const [lugage, setLugage] = useState("");
+  const [luggage, setLuggage] = useState(0);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [birthday, setBirthday] = useState("");
@@ -102,19 +104,12 @@ const PassengerInfor = () => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const flight = useSelector((state) => state.trip.flight);
   const [userInfo, setUserInfo] = useState(null);
+  const [isSecond, setIsSecond] = useState(false);
 
   const dispatch = useDispatch();
-  const location = useLocation();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    return () => {
-      const keepDataPages = ["/passenger-infor", "/flight"]; // Trang muốn giữ dữ liệu
-      if (!keepDataPages.includes(location.pathname)) {
-        dispatch(resetFlight()); // Xóa Redux khi rời khỏi các trang không trong danh sách
-      }
-    };
-  }, [location.pathname, dispatch]);
+  const TARGET_PATH = "/passenger-infor";
 
   useEffect(() => {
     if (userInfo) {
@@ -133,6 +128,40 @@ const PassengerInfor = () => {
     }
   }, [userInfo]);
 
+  const handleReloadOnPath = () => {
+    dispatch(
+      updateFlight({
+        luggageArrival: 0,
+        luggageReturn: 0,
+      })
+    );
+  };
+
+  useEffect(() => {
+    // Hàm kiểm tra và thực thi
+    const checkAndRunOnReload = () => {
+      if (window.performance && performance.getEntriesByType) {
+        const navigationEntries = performance.getEntriesByType("navigation");
+        if (
+          navigationEntries.length > 0 &&
+          navigationEntries[0].type === "reload"
+        ) {
+          if (window.location.pathname === TARGET_PATH) {
+            handleReloadOnPath(); // Gọi hàm xử lý của bạn
+          }
+        }
+      } else {
+        console.warn("Performance Navigation Timing API not supported.");
+      }
+    };
+
+    // Chạy kiểm tra khi component được mount
+    checkAndRunOnReload();
+
+    // Không cần cleanup listener ở đây vì chúng ta chỉ kiểm tra một lần khi tải trang
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [TARGET_PATH]);
+
   const handleNext = () => {
     if (
       !firstName ||
@@ -142,15 +171,43 @@ const PassengerInfor = () => {
       !CCCD ||
       !phoneNumber
     ) {
-      alert("Vui lòng nhập đầy đủ thông tin hành khách!");
+      toast.error("Vui lòng nhập đầy đủ thông tin hành khách!");
       return;
     }
 
-    dispatch(updateFlight({
-      luggage: lugage,
-    }))
-    navigate("/seat-map");
+    // bay 1 chiều
+    if (!flight.isRoundTrip) {
+      dispatch(
+        updateFlight({
+          luggageArrival: luggage,
+        })
+      );
+      navigate("/seat-map");
+      return;
+    } else {
+      // bay 2 chiều, nhưng vé chuyến đi
+      if (!isSecond) {
+        dispatch(
+          updateFlight({
+            luggageArrival: luggage,
+          })
+        );
+        setLuggage(0);
+        setIsSecond(true); // Chuyển sang trạng thái chặng 2
+        toast.success("Lưu thông tin chuyến đi thành công!");
+        toast.info("Vui lòng chọn tiếp thông tin chuyến khứ hồi!");
+      } else {
+        dispatch(
+          updateFlight({
+            luggageReturn: luggage,
+          })
+        );
+        navigate("/seat-map");
+      }
+    }
   };
+
+  // Hàm kiểm tra và thực thi
 
   const fetchUserInfo = async () => {
     try {
@@ -161,19 +218,22 @@ const PassengerInfor = () => {
         return;
       }
 
-      const response = await axios.get("http://localhost:8080/user/getMyInfo", {
-        headers: {
-          Authorization: `Bearer ${token}`, // Thêm token vào header
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await axiosInstance.get(
+        "http://localhost:8080/user/getMyInfo",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Thêm token vào header
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (response.data.code === 1000) {
         setUserInfo(response.data.result);
 
-        alert("tự động điền thông tin thành công!");
+        toast.success("lấy thông tin đăng nhập thành công!");
       } else {
-        alert("Không thể lấy thông tin tài khoản!");
+        toast.error("Không thể lấy thông tin tài khoản!");
       }
     } catch (error) {
       console.error("Lỗi khi lấy thông tin tài khoản:", error);
@@ -230,13 +290,13 @@ const PassengerInfor = () => {
           dark:border-gray-600 transition-colors
            font-bold bg-[#605dec] text-white rounded-lg focus:rounded-lg
           "
-          value={lugage}
-          onChange={(e) => setLugage(e.target.value)}
+          value={luggage}
+          onChange={(e) => setLuggage(e.target.value)}
         >
           <option
             className="text-gray-900 bg-white"
             value="0"
-            defaultValue={"0"}
+            selected
           >
             7kg xách tay (0 VND)
           </option>
@@ -263,7 +323,9 @@ const PassengerInfor = () => {
           flightFrom={flight.departFlight}
           flightTo={flight.returnFlight}
           isRoundTrip={flight.isRoundTrip}
-          luggage={lugage}
+          luggage={luggage}
+          level={null}
+          isSecond={isSecond}
         />
         <img className="pt-20" src={bagImg} alt="Luggage" />
       </div>
@@ -275,7 +337,8 @@ const PassengerInfor = () => {
             {(
               (flight.departFlight?.basePrice || 0) +
               (flight.returnFlight?.basePrice || 0) +
-              Number(lugage)
+              Number(luggage) +
+              Number(flight.luggageArrival)
             ).toLocaleString("vi-VN")}{" "}
             VND
           </p>

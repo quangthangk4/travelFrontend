@@ -2,13 +2,22 @@ import React, { useEffect, useState } from "react";
 import { IoIosAirplane } from "react-icons/io";
 import { useSelector } from "react-redux";
 
-const BookingInfo = ({ flightFrom, flightTo, isRoundTrip, luggage }) => {
+const BookingInfo = ({
+  flightFrom,
+  flightTo,
+  isRoundTrip,
+  luggage,
+  level,
+  isSecond,
+}) => {
   const [listAirports, setListAirports] = useState(
     useSelector((state) => state.trip.airports) || []
   ); // Lấy trạng danh sách airport từ Redux
 
   const [airportFrom, setAirportFrom] = useState(null);
   const [airportTo, setAirportTo] = useState(null);
+  const flight = useSelector((state) => state.trip.flight);
+
 
   const getDuration = (dep, arr) => {
     const depTime = new Date(dep);
@@ -99,21 +108,87 @@ const BookingInfo = ({ flightFrom, flightTo, isRoundTrip, luggage }) => {
               <p>{flightFrom.airCraft.airline.name}</p>
               <p>{flightFrom.flightNumber}</p>
             </div>
+
+            {luggage != null && (
+              <>
+                {!isSecond ? (
+                  <div className="flex text-[14px] justify-between">
+                    <p>Gói Hành lý: </p>
+                    <p className="font-bold">
+                      {Number(luggage || flight.luggageArrival).toLocaleString(
+                        "vi-VN"
+                      )}{" "}
+                      VND
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex text-[14px] justify-between">
+                    <p>Gói Hành lý: </p>
+                    <p className="font-bold">
+                      {Number(flight.luggageArrival).toLocaleString("vi-VN")}{" "}
+                      VND
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
+            {level != null && (
+              <>
+                {!isSecond ? (
+                  <div className="flex text-[14px] justify-between">
+                    <p>Giá hạng vé và chỗ ngồi: </p>
+                    <p className="font-bold">
+                      {Number(level || flight.seatPriceArrival).toLocaleString(
+                        "vi-VN"
+                      )}{" "}
+                      VND
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex text-[14px] justify-between">
+                    <p>Giá hạng vé và chỗ ngồi: </p>
+                    <p className="font-bold">
+                      {Number(flight.seatPriceArrival).toLocaleString("vi-VN")}{" "}
+                      VND
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
 
         {/* Chuyến về (nếu là khứ hồi) */}
         {isRoundTrip && !flightTo && (
-          <div>
-            <div className="flex justify-between text-[18px] bg-[#c9efff] py-[13px] px-[21px]">
-              <h2>Chuyến về</h2>
-              <p className="text-[#ec2029] font-bold">___,___,___ VND</p>
+          <div className="pb-5">
+            <div className="flex justify-between text-[18px] bg-[#c9efff] py-[13px] px-[21px] rounded-t-2xl">
+              <h2>Chuyến bay về</h2>
+              <p className="text-[#ec2029] font-bold">__,____,____ VND</p>
             </div>
-            <div className="py-[13px] px-[21px]">
-              <div className="flex justify-between items-center text-[18px] font-semibold">
-                --- <IoIosAirplane className="text-[22px]" /> ---
+            <div className="pt-[13px] px-[21px]">
+              <div className="flex justify-between items-center text-[15px] font-bold">
+                _______________ (_____)
+                <IoIosAirplane className="text-[22px]" />
+                _______________ (_____)
               </div>
-              <div>__ _, __/__/____ | __:__ - __:__ | _____</div>
+              <div className="text-[13px] font-semibold text-gray-500 flex justify-between">
+                ___ __, ___/___/_______
+                <span>___ ____</span>
+                ___ __, ___/___/_______
+              </div>
+              <div className="relative text-[13px] font-semibold text-gray-500 flex justify-between items-center">
+                <p>___ : ___</p>
+                <div className="h-[2px] w-40 bg-gray-300"></div>
+                <span className="absolute text-gray-500 bg-[#ffd230] left-[50%] -translate-x-1/2 px-2 text-center">
+                  Bay thẳng
+                </span>
+                <p>___ : ___</p>
+              </div>
+
+              <div className="text-[15px] pt-1 font-semibold flex justify-between text-gray-700">
+                <p>_________________</p>
+                <p>_____</p>
+              </div>
             </div>
           </div>
         )}
@@ -129,8 +204,8 @@ const BookingInfo = ({ flightFrom, flightTo, isRoundTrip, luggage }) => {
             <div className="pt-[13px] px-[21px]">
               <div className="flex justify-between items-center text-[15px] font-bold">
                 {airportTo?.tinhThanh} ({airportTo?.maIATA}){" "}
-                <IoIosAirplane className="text-[22px]" /> {airportFrom?.tinhThanh}{" "}
-                ({airportFrom?.maIATA}){" "}
+                <IoIosAirplane className="text-[22px]" />{" "}
+                {airportFrom?.tinhThanh} ({airportFrom?.maIATA}){" "}
               </div>
               <div className="text-[13px] font-semibold text-gray-500 flex justify-between">
                 {new Date(flightTo.departureTime).toLocaleString("vi-VN", {
@@ -140,10 +215,7 @@ const BookingInfo = ({ flightFrom, flightTo, isRoundTrip, luggage }) => {
                   year: "numeric",
                 })}{" "}
                 <span>
-                  {getDuration(
-                    flightTo.departureTime,
-                    flightTo.arrivalTime
-                  )}
+                  {getDuration(flightTo.departureTime, flightTo.arrivalTime)}
                 </span>
                 {new Date(flightTo.arrivalTime).toLocaleString("vi-VN", {
                   weekday: "short",
@@ -168,13 +240,10 @@ const BookingInfo = ({ flightFrom, flightTo, isRoundTrip, luggage }) => {
                   Bay thẳng
                 </span>
                 <p>
-                  {new Date(flightTo.arrivalTime).toLocaleTimeString(
-                    "vi-VN",
-                    {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    }
-                  )}
+                  {new Date(flightTo.arrivalTime).toLocaleTimeString("vi-VN", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </p>
               </div>
 
@@ -182,6 +251,54 @@ const BookingInfo = ({ flightFrom, flightTo, isRoundTrip, luggage }) => {
                 <p>{flightTo.airCraft.airline.name}</p>
                 <p>{flightTo.flightNumber}</p>
               </div>
+              {luggage != null && (
+                <>
+                  {isSecond ? (
+                    <div className="flex text-[14px] justify-between">
+                      <p>Gói Hành lý: </p>
+                      <p className="font-bold">
+                        {Number(
+                          luggage || flight.luggageReturn
+                        ).toLocaleString("vi-VN")}{" "}
+                        VND
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex text-[14px] justify-between">
+                      <p>Gói Hành lý: </p>
+                      <p className="font-bold">
+                        {Number(flight.luggageReturn).toLocaleString("vi-VN")}{" "}
+                        VND
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
+              {level != null && (
+                <>
+                  {isSecond ? (
+                    <div className="flex text-[14px] justify-between">
+                      <p>Giá hạng vé và chỗ ngồi: </p>
+                      <p className="font-bold">
+                        {Number(
+                          level || flight.seatPriceReturn
+                        ).toLocaleString("vi-VN")}{" "}
+                        VND
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex text-[14px] justify-between">
+                      <p>Giá hạng vé và chỗ ngồi: </p>
+                      <p className="font-bold">
+                        {Number(flight.seatPriceReturn).toLocaleString(
+                          "vi-VN"
+                        )}{" "}
+                        VND
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
         )}
@@ -191,28 +308,38 @@ const BookingInfo = ({ flightFrom, flightTo, isRoundTrip, luggage }) => {
           <div className="flex text-[14px] justify-between">
             <p>Vé máy bay: </p>
             <p className="text-gray-200">
-              {flightFrom.basePrice.toLocaleString("vi-VN")} VND
-            </p>
-          </div>
-          {luggage && (
-            <div className="flex text-[14px] justify-between">
-              <p>Gói Hành lý: </p>
-              <p className="text-gray-200">
-                {Number(luggage).toLocaleString("vi-VN")} VND
-              </p>
-            </div>
-          )}
-          <div className="mt-3 flex justify-between border-t-1 border-gray-200">
-            <h2 className="text-[20px]">Tổng tiền</h2>
-            <p className="font-bold text-[22px] italic">
               {(
-                flightFrom.basePrice +
-                (flightTo?.basePrice || 0) +
-                Number(luggage)
+                Number(flightFrom?.basePrice || 0) +
+                Number(flightTo?.basePrice || 0)
               ).toLocaleString("vi-VN")}{" "}
               VND
             </p>
           </div>
+
+          {luggage !== null && (
+            <div className="flex text-[14px] justify-between">
+              <p>Gói Hành lý: </p>
+              <p className="text-gray-200">
+                {(
+                  Number(flight.luggageArrival) +
+                  Number(luggage === 0 ? flight.luggageReturn : luggage)
+                ).toLocaleString("vi-VN")}{" "}
+                VND
+              </p>
+            </div>
+          )}
+
+          {level !== null && (
+            <div className="flex text-[14px] justify-between">
+              <p>Giá hạng vé và chỗi ngồi: </p>
+              <p className="text-gray-200">
+                {(
+                  Number(flight.seatPriceArrival) +
+                  Number(level === 0 ? flight.seatPriceReturn : level)
+                ).toLocaleString("vi-VN")}{" "} VND
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

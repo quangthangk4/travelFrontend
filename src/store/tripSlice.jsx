@@ -2,11 +2,16 @@ import { createSlice } from "@reduxjs/toolkit";
 
 // Khởi tạo state ban đầu
 const initialState = {
+  airports: [],
   flight: {
     departFlight: {},
     returnFlight: {},
-    luggage: 0,
-    seatPrice: 0,
+    luggageArrival: 0,
+    luggageReturn: 0,
+    seatPriceArrival: 0,
+    seatPriceReturn: 0,
+    seatNumberArrival: "",
+    seatNumberReturn: "",
     isRoundTrip: false,
   },
 };
@@ -25,15 +30,19 @@ const tripSlice = createSlice({
         state.flight.returnFlight = {};
       }
     },
-  },
-  resetFlight: (state) => {
-    state.flight = {
-      departFlight: {},
-      returnFlight: {},
-      luggage: 0,
-      seatPrice: 0,
-      isRoundTrip: false,
-    };
+    resetFlight: (state) => {
+      state.flight = {
+        departFlight: {},
+        returnFlight: {},
+        luggageArrival: 0,
+        luggageReturn: 0,
+        seatPriceArrival: 0,
+        seatPriceReturn: 0,
+        seatNumberArrival: "",
+        seatNumberReturn: "",
+        isRoundTrip: false,
+      };
+    },
   },
 });
 

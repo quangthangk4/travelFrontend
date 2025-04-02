@@ -9,7 +9,7 @@ import {
 } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { updateFlight } from "../../store/tripSlice";
+import { setAirports, updateFlight } from "../../store/tripSlice";
 
 const SearchFlight = ({
   defaultFrom,
@@ -29,19 +29,21 @@ const SearchFlight = ({
   const [isPassengerPopupOpen, setIsPassengerPopupOpen] = useState(false);
   const [adults, setAdults] = useState(1);
   const [minors, setMinors] = useState(0);
+  const [isRoundTripLocal, setIsRoundTripLocal] = useState(!!defaultReturnDate);
 
-  const [airports, setAirports] = useState([]);
+  const [airports, setAirport] = useState([]);
 
   const inputRef = useRef(null);
   const passengerRef = useRef(null);
   const navigate = useNavigate();
+
 
   const handleSearch = () => {
     if (
       !departFrom ||
       !returnFrom ||
       !departDate ||
-      (flight.isRoundTrip && !returnDate)
+      (isRoundTripLocal && !returnDate)
     ) {
       alert("Vui lòng nhập đầy đủ thông tin của chuyến bay!");
       return;
@@ -54,32 +56,30 @@ const SearchFlight = ({
       returnDate: returnDate ? formatDate2(returnDate) : "",
     }).toString();
 
+    dispatch(
+      updateFlight({
+        isRoundTrip: isRoundTripLocal,
+      })
+    );
+
     navigate(`/flight?${query}`);
-    window.location.reload();
   };
 
   useEffect(() => {
     if (defaultReturnDate) {
-      dispatch(
-        updateFlight({
-          isRoundTrip: true,
-        })
-      ); // Nếu có returnDate => cập nhật isRoundTrip thành true
+      setIsRoundTripLocal(true); // Nếu có returnDate => cập nhật isRoundTrip thành true
     } else {
-      dispatch(
-        updateFlight({
-          isRoundTrip: false,
-        })
-      ); // Không có returnDate => một chiều
+      setIsRoundTripLocal(false); //// Không có returnDate => một chiều
     }
-  }, [defaultReturnDate, dispatch]);
+  }, [defaultReturnDate]);
 
   useEffect(() => {
     axios
       .get("http://localhost:8080/airports/vietnam")
       .then((response) => {
         if (response.data && response.data.result) {
-          setAirports(response.data.result);
+          setAirport(response.data.result);
+          dispatch(setAirports(response.data.result));
         }
       })
       .catch((error) => console.error("Lỗi khi tải danh sách sân bay:", error));
@@ -182,7 +182,7 @@ const SearchFlight = ({
           type="text"
           readOnly
           value={
-            flight.isRoundTrip
+            isRoundTripLocal
               ? `${formatDate(departDate)} - ${formatDate(returnDate)}`
               : formatDate(departDate) || ""
           }
@@ -201,14 +201,8 @@ const SearchFlight = ({
                     type="radio"
                     name="tripType"
                     value="oneway"
-                    checked={!flight.isRoundTrip}
-                    onChange={() =>
-                      dispatch(
-                        updateFlight({
-                          isRoundTrip: false,
-                        })
-                      )
-                    }
+                    checked={!isRoundTripLocal}
+                    onChange={() => setIsRoundTripLocal(false)}
                   />
                   <span className="font-medium">One way</span>
                 </label>
@@ -217,14 +211,8 @@ const SearchFlight = ({
                     type="radio"
                     name="tripType"
                     value="roundtrip"
-                    checked={flight.isRoundTrip}
-                    onChange={() =>
-                      dispatch(
-                        updateFlight({
-                          isRoundTrip: true,
-                        })
-                      )
-                    }
+                    checked={isRoundTripLocal}
+                    onChange={() => setIsRoundTripLocal(true)}
                   />
                   <span className="font-medium">Round trip</span>
                 </label>
@@ -246,7 +234,7 @@ const SearchFlight = ({
                     placeholderText="Chọn ngày đi"
                   />
                 </div>
-                {flight.isRoundTrip && (
+                {isRoundTripLocal && (
                   <div className="flex flex-col flex-1">
                     <label className="font-medium">Arrival:</label>
                     <DatePicker
@@ -259,14 +247,6 @@ const SearchFlight = ({
                     />
                   </div>
                 )}
-              </div>
-              <div className="flex justify-end mt-4">
-                <button
-                  className="cursor-pointer px-4 py-2 bg-[#605dec] text-white rounded-md hover:bg-[#423ff5]"
-                  onClick={() => setIsPopupOpen(false)}
-                >
-                  Confirm
-                </button>
               </div>
             </div>
           </div>
