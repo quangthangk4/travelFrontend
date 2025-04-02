@@ -1,44 +1,50 @@
-import React, { useState } from "react";
-import { FaPlane, FaSearch, FaSort, FaFilter } from "react-icons/fa";
 import { format } from "date-fns";
+import React, { useEffect, useState } from "react";
+import { FaFilter, FaPlane, FaSearch, FaSort } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { getAuthWithExpiry } from "../auth/manageToken";
+import axios from "axios";
+import axiosInstance from "../components/Api/axiosClient";
 
 const FlightHistoryPage = () => {
-  const [flights, setFlights] = useState([
-    {
-      id: 1,
-      flightNumber: "BA2467",
-      airline: "Bamboo Airlines",
-      from: "JFK",
-      to: "LAX",
-      departureDate: "2024-02-20T10:30:00",
-      status: "Completed",
-      price: 549.99,
-    },
-    {
-      id: 2,
-      flightNumber: "UA1234",
-      airline: "United Airlines",
-      from: "SFO",
-      to: "ORD",
-      departureDate: "2024-02-25T08:15:00",
-      status: "Upcoming",
-      price: 423.5,
-    },
-    {
-      id: 3,
-      flightNumber: "DL5678",
-      airline: "Delta Airlines",
-      from: "LAX",
-      to: "MIA",
-      departureDate: "2024-03-05T14:20:00",
-      status: "Cancelled",
-      price: 632.75,
-    },
-  ]);
+  const [flights, setFlights] = useState([]);
+  const token = getAuthWithExpiry("token");
 
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+
+  // {
+  //   id: 1,
+  //   flightNumber: "BA2467",
+  //   airline: "Bamboo Airlines",
+  //   from: "JFK",
+  //   to: "LAX",
+  //   departureDate: "2024-02-20T10:30:00",
+  //   status: "Completed",
+  //   price: 549.99,
+  // }
+
+  useEffect(() => {
+    const fetchMyFlights = async () => {
+      try {
+        const response = await axiosInstance.get(
+          "http://localhost:8080/tickets/getMyTickets",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        setFlights(response.data.result);
+      } catch (error) {
+        toast.error("Error fetching user data:", error);
+      }
+    };
+
+    fetchMyFlights();
+  }, []);
 
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);
@@ -54,11 +60,19 @@ const FlightHistoryPage = () => {
 
   const filteredAndSortedFlights = [...flights]
     .filter(
-      (flight) =>
-        flight.flightNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        flight.airline.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        flight.from.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        flight.to.toLowerCase().includes(searchTerm.toLowerCase())
+      (item) =>
+        item.flight.flightNumber
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        item.flight.airCraft.airline.name
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        item.flight.departureAirport
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        item.flight.arrivalAirport
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())
     )
     .sort((a, b) => {
       if (!sortConfig.key) return 0;
@@ -69,7 +83,7 @@ const FlightHistoryPage = () => {
       return 0;
     });
 
-		const navigate = useNavigate();
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
@@ -117,7 +131,7 @@ const FlightHistoryPage = () => {
                     </th>
                     <th
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                      onClick={() => handleSort("airline")}
+                      onClick={() => handleSort("name")}
                     >
                       <div className="flex items-center">
                         Airline
@@ -126,7 +140,7 @@ const FlightHistoryPage = () => {
                     </th>
                     <th
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                      onClick={() => handleSort("departureDate")}
+                      onClick={() => handleSort("departureTime")}
                     >
                       <div className="flex items-center">
                         Date
@@ -135,7 +149,7 @@ const FlightHistoryPage = () => {
                     </th>
                     <th
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                      onClick={() => handleSort("from")}
+                      onClick={() => handleSort("departureAirport")}
                     >
                       Route
                     </th>
@@ -160,41 +174,49 @@ const FlightHistoryPage = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredAndSortedFlights.map((flight) => (
+                  {filteredAndSortedFlights.map((item) => (
                     <tr
-                      key={flight.id}
+                      key={item.seatNumber}
                       className="hover:bg-gray-50 cursor-pointer"
-											onClick={() => navigate(`/ticket-detail`)}
+                      onClick={() =>
+                        navigate(`/ticket-detail`, {
+                          state: { flight: item },
+                        })
+                      }
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <FaPlane className="text-blue-600 mr-2" />
-                          {flight.flightNumber}
+                          {item.flight.flightNumber}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {flight.airline}
+                        {item.flight.airCraft.airline.name}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {format(new Date(flight.departureDate), "dd-MM-yyyy")}
+                        {format(
+                          new Date(item.flight.departureTime),
+                          "dd-MM-yyyy"
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {flight.from} → {flight.to}
+                        {item.flight.departureAirport} →{" "}
+                        {item.flight.arrivalAirport}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        ${flight.price.toFixed(2)}
+                        ${item.price.toFixed(2)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            flight.status === "Completed"
+                            item.status === "Completed"
                               ? "bg-green-100 text-green-800"
-                              : flight.status === "Upcoming"
+                              : item.status === "BOOKED"
                               ? "bg-blue-100 text-blue-800"
                               : "bg-red-100 text-red-800"
                           }`}
                         >
-                          {flight.status}
+                          {item.status}
                         </span>
                       </td>
                     </tr>

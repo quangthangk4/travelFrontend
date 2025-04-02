@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FiEye, FiEyeOff } from "react-icons/fi";
 import CryptoJS from "crypto-js";
+import React, { useEffect, useState } from "react";
+import { FiEye, FiEyeOff } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { setAuthWithExpiry } from "../../auth/manageToken";
 
 const SignIn = () => {
   const navigate = useNavigate();
 
-  const SECRET_KEY =
-    "pt1z1UzcHGGe+fXQJzq+CxtkApvhq9wKoU3NZOwZWAUi0jmVDZzPZi82vAbmgx4o"; // Nên lưu vào biến môi trường
+  const SECRET_KEY = import.meta.env.VITE_SECRET_KEY; // lấy từ biến môi trường  ra
 
   const decryptPassword = (encryptedPassword) => {
     try {
@@ -66,39 +68,35 @@ const SignIn = () => {
       if (response.data.code === 1000) {
         const token = response.data.result.token;
 
-        // 🔥 Mã hóa mật khẩu trước khi lưu
-        const encryptedPassword = CryptoJS.AES.encrypt(
-          formData.password,
-          SECRET_KEY
-        ).toString();
-
-        // lưu token vào localStorage
-        localStorage.setItem("token", token);
+        // lưu token vào localStorage với thời hạn 5 tiếng
+        setAuthWithExpiry("token", token, 5 * 60 * 60 * 1000);
 
         // lưu tk,mk đã mã hóa và localStorage
         if (formData.rememberMe) {
+          //  Mã hóa mật khẩu trước khi lưu (nên dùng thuật toán khác cho mạnh:v)
+          const encryptedPassword = CryptoJS.AES.encrypt(
+            formData.password,
+            SECRET_KEY
+          ).toString();
           localStorage.setItem("savedEmail", formData.email);
           localStorage.setItem("savedPassword", encryptedPassword);
-        }
-        else {
+        } else {
           localStorage.removeItem("savedEmail");
           localStorage.removeItem("savedPassword");
         }
-
-        localStorage.setItem("isAuthenticated", true);
         alert("Đăng nhập thành công!");
 
         // Chuyển hướng sang homepages
         navigate("/");
         window.location.reload();
       } else {
-        setError("Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.");
+        toast.error("Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.");
       }
     } catch (err) {
       if (err.response) {
-        setError(err.response.data.message || "Đăng nhập thất bại.");
+        toast.error(err.response.data.message || "Đăng nhập thất bại.");
       } else {
-        setError("Có lỗi xảy ra. Vui lòng thử lại.");
+        toast.error("Có lỗi xảy ra. Vui lòng thử lại.");
       }
     } finally {
       setLoading(false);
@@ -163,7 +161,6 @@ const SignIn = () => {
             Forgot password?
           </button>
         </div>
-        {error && <p className="text-red-500 text-sm">{error}</p>}
         <button
           type="submit"
           className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-200"

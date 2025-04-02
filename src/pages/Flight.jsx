@@ -1,3 +1,4 @@
+import axios from "axios";
 import "leaflet/dist/leaflet.css";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -8,7 +9,10 @@ import {
   TileLayer,
   useMap,
 } from "react-leaflet";
-import { useSearchParams } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { useDispatch, useSelector } from "react-redux";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import avatarAir from "../assets/images/avatarAir.svg";
 import picture2 from "../assets/images/image-1.png";
 import picture3 from "../assets/images/image-2.png";
@@ -16,18 +20,12 @@ import picture1 from "../assets/images/image.png";
 import place1 from "../assets/images/place1.png";
 import place2 from "../assets/images/place2.png";
 import place3 from "../assets/images/place3.png";
+import BookingInfo from "../components/BookingInfo/BookingInfo";
+import Button from "../components/Button/Button";
 import Cart from "../components/Cart/Cart";
 import SearchFlight from "../components/SearchFlight/SearchFlight";
-import BookingInfo from "../components/BookingInfo/BookingInfo";
-import axios from "axios";
-import { useNavigate, useLocation } from "react-router-dom";
-import Button from "../components/Button/Button";
-import { useDispatch, useSelector } from "react-redux";
-import {
-  resetFlights,
-  selectDepartFlight,
-  selectReturnFlight,
-} from "../store/tripSlice";
+import { resetFlight, updateFlight } from "../store/tripSlice";
+import { getAuthWithExpiry } from "../auth/manageToken";
 
 const FlightMap = ({ from, to }) => {
   const [coordinates, setCoordinates] = useState({});
@@ -46,15 +44,6 @@ const FlightMap = ({ from, to }) => {
       })
       .catch((error) => console.error("Lỗi khi tải danh sách sân bay:", error));
   }, []);
-
-  // const coordinates = {
-  //   NRT: [35.68, 139.76], // Tokyo Narita Airport
-  //   SFO: [37.62, -122.38], // San Francisco Airport
-  //   JFK: [40.64, -73.78], // New York JFK
-  //   LHR: [51.47, -0.45], // London Heathrow
-  //   SGN: [10.82, 106.66], // Tân Sơn Nhất Airport (Vietnam)
-  //   HAN: [21.22, 105.8], // Nội Bài Airport (Vietnam)
-  // };
 
   // Trạng thái vị trí máy bay
   const [planePosition, setPlanePosition] = useState(null);
@@ -245,12 +234,6 @@ const FlightItem = ({ flight, isLast, onSelect }) => {
     return `${hours}h ${minutes}m`; // Định dạng hh:mm
   };
 
-  // const formatTimeRange = (departureTime, arrivalTime) => {
-  //   const depTime = new Date(departureTime);
-  //   const arrTime = new Date(arrivalTime);
-
-  //   return `${formatTime(depTime)} - ${formatTime(arrTime)}`;
-  // };
   const formatTime = (date) => {
     date = new Date(date);
     const hours = String(date.getHours()).padStart(2, "0");
@@ -286,17 +269,14 @@ const FlightItem = ({ flight, isLast, onSelect }) => {
           </p>
         </div>
 
-        {/* <div className="flex-1 text-end">
-          <p>{flight.arrivalAirport}</p>
-          <p>{flight.arrivalTime}</p>
-        </div> */}
-
         <div className="flex-1 text-center">
           <p>Bay thẳng</p>
         </div>
 
         <div className="flex-1 text-end">
-          <p className="text-lg font-semibold">1,000,000 VND</p>
+          <p className="text-lg font-semibold">
+            {flight?.basePrice.toLocaleString("vi-VN")} VND
+          </p>
         </div>
       </div>
     </div>
@@ -390,8 +370,8 @@ const Flight = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedFlight, setSelectedFlight] = useState(null);
-  const isRoundTrip = useSelector((state) => state.trip.isRoundTrip); // Lấy trạng thái khứ hồi từ Redux
   const [selectedFlight2, setSelectedFlight2] = useState(null);
+  const flight = useSelector((state) => state.trip.flight);
 
   const [isSecond, setIsSecond] = useState(false);
 
@@ -404,14 +384,20 @@ const Flight = () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await axios.post(
-          "http://localhost:8080/flight/search",
-          {
+        let response;
+        if (!isSecond) {
+          response = await axios.post("http://localhost:8080/flight/search", {
             departureAirport: from,
             arrivalAirport: to,
             departureDate: departDateString,
-          }
-        );
+          });
+        } else {
+          response = await axios.post("http://localhost:8080/flight/search", {
+            departureAirport: to,
+            arrivalAirport: from,
+            departureDate: returnDateString,
+          });
+        }
 
         setFilteredFlights(response.data.result);
       } catch (err) {
@@ -424,7 +410,7 @@ const Flight = () => {
     if (from && to && departDateString) {
       fetchFlights();
     }
-  }, [from, to, departDateString]); // Thêm dependency để gọi lại API khi thay đổi
+  }, [from, to, departDateString, isSecond]); // Thêm dependency để gọi lại API khi thay đổi
   // Chuyển đổi thành Date (nếu hợp lệ)
   const [departDate, setDepartDate] = useState(
     departDateString ? new Date(departDateString) : null
@@ -439,49 +425,55 @@ const Flight = () => {
     setFilteredFlights(data);
   };
 
-  const handleSelectFlight = (flight) => {
+  const handleSelectFlight = (flightLocal) => {
     if (!isSecond) {
-      setSelectedFlight(flight);
-    } else if (isRoundTrip && isSecond) {
-
-      setSelectedFlight2(flight);
+      setSelectedFlight(flightLocal);
+    } else if (flight.isRoundTrip && isSecond) {
+      setSelectedFlight2(flightLocal);
     }
   };
 
-  useEffect(() => {
-    return () => {
-      const keepDataPages = ["/passenger-infor", "/flight"]; // Trang muốn giữ dữ liệu
-      if (!keepDataPages.includes(location.pathname)) {
-        dispatch(resetFlights()); // Xóa Redux khi rời khỏi các trang không trong danh sách
-      }
-    };
-  }, [location.pathname, dispatch]);
-
   const handleContinue = () => {
+    if (!getAuthWithExpiry("token")) {
+      alert("vui lòng đăng nhập để đặt vé");
+      return;
+    }
+
     if (!selectedFlight && !selectedFlight2) {
       alert("Quý khách chưa chọn vé!");
 
       return;
     }
 
-    if (!isRoundTrip && selectedFlight) {
-
-      dispatch(selectDepartFlight(selectedFlight));
+    if (!flight.isRoundTrip && selectedFlight) {
+      // dispatch(updateFlight(selectedFlight));
+      dispatch(
+        updateFlight({
+          departFlight: selectedFlight,
+        })
+      );
+      console.log("cập nhật flight");
       navigate("/passenger-infor");
       return;
     }
 
-    if (isRoundTrip) {
+    if (flight.isRoundTrip) {
       if (!isSecond) {
-
-        dispatch(selectDepartFlight(selectedFlight));
+        dispatch(
+          updateFlight({
+            departFlight: selectedFlight,
+          })
+        );
         setIsSecond(true); // Chuyển sang trạng thái chặng 2
+        toast.success("Chọn chuyến đi thành công!");
       } else if (selectedFlight2) {
-
-        dispatch(selectReturnFlight(selectedFlight2));
+        dispatch(
+          updateFlight({
+            returnFlight: selectedFlight2,
+          })
+        );
         navigate("/passenger-infor");
       } else {
-
         alert("Quý khách chưa chọn vé khứ hồi!");
       }
     }
@@ -507,9 +499,15 @@ const Flight = () => {
       </div>
       <div className="grid grid-cols-3 gap-x-10 mt-12">
         <div className="col-span-2">
-          <p className="text-[#6e7491] font-medium">
-            Choose a <span className="text-[#605dec] ">departing</span> flight
-          </p>
+          {!isSecond ? (
+            <p className="text-[#6e7491] font-medium">
+              Choose a <span className="text-[#605dec] ">departing</span> flight
+            </p>
+          ) : (
+            <p className="text-[#6e7491] font-medium">
+              Choose a <span className="text-[#605dec] ">returning</span> flight
+            </p>
+          )}
 
           {error && (
             <div className="text-center p-5 text-red-500 bg-red-100 border border-red-400 rounded-md">
@@ -546,10 +544,12 @@ const Flight = () => {
             Booking <span className="text-[#605dec] ">information</span>
           </p>
           <BookingInfo
-            button={"Lưu và Điền thông tin cá nhân"}
-            flight={selectedFlight}
-            flight2={selectedFlight2}
-            isRoundTrip={isRoundTrip}
+            flightFrom={selectedFlight}
+            flightTo={selectedFlight2}
+            isRoundTrip={flight.isRoundTrip}
+            luggage={null}
+            level={null}
+            isSecond={isSecond}
           />
         </div>
       </div>
@@ -561,10 +561,18 @@ const Flight = () => {
       <div className="py-[11px] fixed bottom-0 left-0 right-0 px-15 bg-white border-1 w-full z-[8888] flex justify-end pe-50">
         <div className="pe-50">
           <p className="font-semibold">Tổng tiền</p>
-          <p className="font-semibold italic text-2xl">2,322,200 VND</p>
+          <p className="font-semibold italic text-2xl">
+            {(
+              (selectedFlight?.basePrice || 0) +
+              (selectedFlight2?.basePrice || 0) +
+              Number(0)
+            ).toLocaleString("vi-VN")}{" "}
+            VND
+          </p>
         </div>
         <Button onClick={handleContinue} text={"Đi tiếp"} />
       </div>
+      <ToastContainer position="top-right" autoClose={3000} />
     </div>
   );
 };

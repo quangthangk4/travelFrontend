@@ -54,6 +54,7 @@ const SignUp = () => {
         formData
       );
       alert("Registration successful! Redirecting to login...");
+      // xóa mật khẩu tk đã lưu trước đó, rồi chuyển hướng tới login
       localStorage.removeItem("savedEmail");
       localStorage.removeItem("savedPassword");
       navigate("/sign-in"); // Điều hướng đến trang đăng nhập

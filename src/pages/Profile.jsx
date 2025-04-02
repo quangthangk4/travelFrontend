@@ -3,6 +3,8 @@ import axios from "axios";
 import { FiEdit2 } from "react-icons/fi";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import { getAuthWithExpiry } from "../auth/manageToken";
+import axiosInstance from "../components/Api/axiosClient";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -22,12 +24,11 @@ const ProfilePage = () => {
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
-        console.log(localStorage.getItem("token"));
-        const response = await axios.get(
+        const response = await axiosInstance.get(
           "http://localhost:8080/user/getMyInfo",
           {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
+              Authorization: `Bearer ${getAuthWithExpiry("token")}`,
             },
           }
         );
@@ -56,9 +57,9 @@ const ProfilePage = () => {
 
   const handleSave = async () => {
     try {
-      await axios.put("http://localhost:8080/user/update", editedUser, {
+      await axiosInstance.put("http://localhost:8080/user/update", editedUser, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${getAuthWithExpiry("token")}`,
           "Content-Type": "application/json",
         },
       });
@@ -72,7 +73,7 @@ const ProfilePage = () => {
   };
 
   const handleDeposit = () => {
-    navigate("/deposit"); // Chuyển hướng sang trang nạp tiền
+    navigate("/deposit-money"); // Chuyển hướng sang trang nạp tiền
   };
 
   if (loading) {

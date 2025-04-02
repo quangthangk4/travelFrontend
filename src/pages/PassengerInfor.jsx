@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import bagImg from "../assets/images/Luggage.svg";
+import { getAuthWithExpiry } from "../auth/manageToken";
+import axiosInstance from "../components/Api/axiosClient";
 import BookingInfo from "../components/BookingInfo/BookingInfo";
 import Button from "../components/Button/Button";
 import InputLable from "../components/Input/InputLable";
-import { resetFlights } from "../store/tripSlice";
-import { useSelector } from "react-redux";
-import { useNavigate, useLocation } from "react-router-dom";
-import axios from "axios";
+import { updateFlight } from "../store/tripSlice";
 
 const FormInfor = ({
   firstName,
@@ -93,30 +95,21 @@ const FormInfor = ({
 };
 
 const PassengerInfor = () => {
-  const [bag, setBag] = useState("");
+  const [luggage, setLuggage] = useState(0);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [birthday, setBirthday] = useState("");
   const [email, setEmail] = useState("");
   const [CCCD, setCCCD] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
-  const selectedFlight1 = useSelector((state) => state.trip.departFlight);
-  const selectedFlight2 = useSelector((state) => state.trip.returnFlight);
-  const isRoundTrip = useSelector((state) => state.trip.isRoundTrip);
+  const flight = useSelector((state) => state.trip.flight);
   const [userInfo, setUserInfo] = useState(null);
+  const [isSecond, setIsSecond] = useState(false);
 
   const dispatch = useDispatch();
-  const location = useLocation();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    return () => {
-      const keepDataPages = ["/passenger-infor", "/flight"]; // Trang muốn giữ dữ liệu
-      if (!keepDataPages.includes(location.pathname)) {
-        dispatch(resetFlights()); // Xóa Redux khi rời khỏi các trang không trong danh sách
-      }
-    };
-  }, [location.pathname, dispatch]);
+  const TARGET_PATH = "/passenger-infor";
 
   useEffect(() => {
     if (userInfo) {
@@ -135,6 +128,40 @@ const PassengerInfor = () => {
     }
   }, [userInfo]);
 
+  const handleReloadOnPath = () => {
+    dispatch(
+      updateFlight({
+        luggageArrival: 0,
+        luggageReturn: 0,
+      })
+    );
+  };
+
+  useEffect(() => {
+    // Hàm kiểm tra và thực thi
+    const checkAndRunOnReload = () => {
+      if (window.performance && performance.getEntriesByType) {
+        const navigationEntries = performance.getEntriesByType("navigation");
+        if (
+          navigationEntries.length > 0 &&
+          navigationEntries[0].type === "reload"
+        ) {
+          if (window.location.pathname === TARGET_PATH) {
+            handleReloadOnPath(); // Gọi hàm xử lý của bạn
+          }
+        }
+      } else {
+        console.warn("Performance Navigation Timing API not supported.");
+      }
+    };
+
+    // Chạy kiểm tra khi component được mount
+    checkAndRunOnReload();
+
+    // Không cần cleanup listener ở đây vì chúng ta chỉ kiểm tra một lần khi tải trang
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [TARGET_PATH]);
+
   const handleNext = () => {
     if (
       !firstName ||
@@ -144,34 +171,69 @@ const PassengerInfor = () => {
       !CCCD ||
       !phoneNumber
     ) {
-      alert("Vui lòng nhập đầy đủ thông tin hành khách!");
+      toast.error("Vui lòng nhập đầy đủ thông tin hành khách!");
       return;
     }
-    navigate("/seat-map");
+
+    // bay 1 chiều
+    if (!flight.isRoundTrip) {
+      dispatch(
+        updateFlight({
+          luggageArrival: luggage,
+        })
+      );
+      navigate("/seat-map");
+      return;
+    } else {
+      // bay 2 chiều, nhưng vé chuyến đi
+      if (!isSecond) {
+        dispatch(
+          updateFlight({
+            luggageArrival: luggage,
+          })
+        );
+        setLuggage(0);
+        setIsSecond(true); // Chuyển sang trạng thái chặng 2
+        toast.success("Lưu thông tin chuyến đi thành công!");
+        toast.info("Vui lòng chọn tiếp thông tin chuyến khứ hồi!");
+      } else {
+        dispatch(
+          updateFlight({
+            luggageReturn: luggage,
+          })
+        );
+        navigate("/seat-map");
+      }
+    }
   };
+
+  // Hàm kiểm tra và thực thi
 
   const fetchUserInfo = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = getAuthWithExpiry("token");
 
       if (!token) {
         alert("Bạn chưa đăng nhập!");
         return;
       }
 
-      const response = await axios.get("http://localhost:8080/user/getMyInfo", {
-        headers: {
-          Authorization: `Bearer ${token}`, // Thêm token vào header
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await axiosInstance.get(
+        "http://localhost:8080/user/getMyInfo",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Thêm token vào header
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (response.data.code === 1000) {
         setUserInfo(response.data.result);
 
-        alert("tự động điền thông tin thành công!");
+        toast.success("lấy thông tin đăng nhập thành công!");
       } else {
-        alert("Không thể lấy thông tin tài khoản!");
+        toast.error("Không thể lấy thông tin tài khoản!");
       }
     } catch (error) {
       console.error("Lỗi khi lấy thông tin tài khoản:", error);
@@ -228,29 +290,29 @@ const PassengerInfor = () => {
           dark:border-gray-600 transition-colors
            font-bold bg-[#605dec] text-white rounded-lg focus:rounded-lg
           "
-          value={bag}
-          onChange={(e) => setBag(e.target.value)}
+          value={luggage}
+          onChange={(e) => setLuggage(e.target.value)}
         >
           <option
             className="text-gray-900 bg-white"
-            value="7x"
-            defaultValue={""}
+            value="0"
+            selected
           >
             7kg xách tay (0 VND)
           </option>
-          <option className="text-gray-900 bg-white" value="7x21kg">
+          <option className="text-gray-900 bg-white" value="200000">
             7kg xách tay và 21kg kí gửi (200,000 VND)
           </option>
-          <option className="text-gray-900 bg-white" value="12x21kg">
+          <option className="text-gray-900 bg-white" value="230000">
             12kg xách tay và 21kg kí gửi (230,000 VND)
           </option>
-          <option className="text-gray-900 bg-white" value="7x30kg">
+          <option className="text-gray-900 bg-white" value="300000">
             7kg xách tay và 30kg kí gửi (300,000 VND)
           </option>
-          <option className="text-gray-900 bg-white" value="15x30kg">
+          <option className="text-gray-900 bg-white" value="350000">
             15kg xách tay và 30kg kí gửi (350,000 VND)
           </option>
-          <option className="text-gray-900 bg-white" value="15x50kg">
+          <option className="text-gray-900 bg-white" value="500000">
             15kg xách tay và 50kg kí gửi (500,000 VND)
           </option>
         </select>
@@ -258,11 +320,12 @@ const PassengerInfor = () => {
 
       <div className="">
         <BookingInfo
-          button={"Chọn Ghế"}
-          flight={selectedFlight1}
-          flight2={selectedFlight2}
-          isRoundTrip={isRoundTrip}
-          luggage={null}
+          flightFrom={flight.departFlight}
+          flightTo={flight.returnFlight}
+          isRoundTrip={flight.isRoundTrip}
+          luggage={luggage}
+          level={null}
+          isSecond={isSecond}
         />
         <img className="pt-20" src={bagImg} alt="Luggage" />
       </div>
@@ -270,7 +333,15 @@ const PassengerInfor = () => {
       <div className="py-[11px] fixed bottom-0 left-0 right-0 px-15 bg-white border-1 w-full z-8888 flex justify-end pe-50">
         <div className="pe-50">
           <p className="font-semibold">Tổng tiền</p>
-          <p className="font-semibold italic text-2xl">2,322,200 VND</p>
+          <p className="font-semibold italic text-2xl">
+            {(
+              (flight.departFlight?.basePrice || 0) +
+              (flight.returnFlight?.basePrice || 0) +
+              Number(luggage) +
+              Number(flight.luggageArrival)
+            ).toLocaleString("vi-VN")}{" "}
+            VND
+          </p>
         </div>
         <Button text={"Đi tiếp"} onClick={handleNext} />
       </div>

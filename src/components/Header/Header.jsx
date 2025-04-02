@@ -2,36 +2,30 @@ import React, { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Button from "../Button/Button";
+import { getAuthWithExpiry } from "../../auth/manageToken";
+import { toast } from "react-toastify";
+import axiosInstance from "../Api/axiosClient";
 
-const Header = () => {
+const Header = ({ isLoggedIn, role }) => {
   const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  // Kiểm tra xem có token không
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    setIsAuthenticated(!!token);
-    localStorage.setItem("isAuthenticated", isAuthenticated);
-  }, []);
 
   // Xử lý logout
   const handleLogout = async () => {
-    const token = localStorage.getItem("token");
+    const token = getAuthWithExpiry("token");
 
     if (!token) return;
 
     try {
-      await axios.post("http://localhost:8080/auth/logout", { token });
+      await axiosInstance.post("http://localhost:8080/auth/logout", { token });
 
       // Xóa token sau khi logout thành công
       localStorage.removeItem("token");
-      setIsAuthenticated(false);
       alert("đăng xuất thành công!");
       navigate("/"); // Quay về trang chủ
       window.location.reload();
     } catch (error) {
-      console.error("Logout failed:", error.response?.data || error.message);
-      alert("Logout failed. Please try again.");
+      toast.error("Logout failed: " + error.response?.data.message);
+      console.log(error);
     }
   };
 
@@ -45,16 +39,13 @@ const Header = () => {
           Flights
         </NavLink>
 
-        {isAuthenticated && (
+        {isLoggedIn && (
           <NavLink to="/ticket-history" className="mx-3 hover:text-blue-700">
             Ticket History
           </NavLink>
         )}
-        <NavLink to="/" className="mx-3 hover:text-blue-700">
-          Packages
-        </NavLink>
 
-        {!isAuthenticated ? (
+        {!isLoggedIn ? (
           <>
             <div className="mx-3">
               <Button text={"Sign In"} onClick={() => navigate("/sign-in")} />
@@ -65,6 +56,20 @@ const Header = () => {
           </>
         ) : (
           <>
+            {role === "ROLE_ADMIN" && (
+              <>
+                <NavLink to="/airline" className="mx-3 hover:text-blue-700">
+                  Airline
+                </NavLink>
+                <NavLink to="/aircraft" className="mx-3 hover:text-blue-700">
+                  Aircraft
+                </NavLink>
+                <NavLink to="/flight-admin" className="mx-3 hover:text-blue-700">
+                  Flight Control
+                </NavLink>
+              </>
+            )}
+
             <div className="mx-3">
               <Button text={"Profile"} onClick={() => navigate("/profile")} />
             </div>

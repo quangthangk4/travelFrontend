@@ -2,9 +2,18 @@ import { createSlice } from "@reduxjs/toolkit";
 
 // Khởi tạo state ban đầu
 const initialState = {
-  departFlight: null,
-  returnFlight: null,
-  isRoundTrip: false, // Mặc định là một chiều
+  airports: [],
+  flight: {
+    departFlight: {},
+    returnFlight: {},
+    luggageArrival: 0,
+    luggageReturn: 0,
+    seatPriceArrival: 0,
+    seatPriceReturn: 0,
+    seatNumberArrival: "",
+    seatNumberReturn: "",
+    isRoundTrip: false,
+  },
 };
 
 // Tạo slice Redux
@@ -12,33 +21,33 @@ const tripSlice = createSlice({
   name: "trip",
   initialState,
   reducers: {
-    setRoundTrip: (state, action) => {
-      state.isRoundTrip = action.payload; // Cập nhật giá trị true / false từ radio button
-      if (!action.payload) {
-        state.returnFlight = null; // Reset chuyến bay về nếu đổi sang một chiều
+    setAirports: (state, action) => {
+      state.airports = action.payload;
+    },
+    updateFlight: (state, action) => {
+      state.flight = { ...state.flight, ...action.payload };
+      if (!state.flight.isRoundTrip && state.flight.returnFlight) {
+        state.flight.returnFlight = {};
       }
     },
-    selectDepartFlight: (state, action) => {
-      state.departFlight = action.payload;
-    },
-    selectReturnFlight: (state, action) => {
-      state.returnFlight = action.payload;
-    },
-    resetFlights: (state) => {
-      state.departFlight = null;
-      state.returnFlight = null;
-      state.isRoundTrip = false;
+    resetFlight: (state) => {
+      state.flight = {
+        departFlight: {},
+        returnFlight: {},
+        luggageArrival: 0,
+        luggageReturn: 0,
+        seatPriceArrival: 0,
+        seatPriceReturn: 0,
+        seatNumberArrival: "",
+        seatNumberReturn: "",
+        isRoundTrip: false,
+      };
     },
   },
 });
 
 // Export actions để sử dụng trong component
-export const {
-  setRoundTrip,
-  selectDepartFlight,
-  selectReturnFlight,
-  resetFlights,
-} = tripSlice.actions;
+export const { updateFlight, setAirports, resetFlight } = tripSlice.actions;
 
 // Export reducer để đưa vào store
 export default tripSlice.reducer;
