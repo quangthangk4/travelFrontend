@@ -204,7 +204,7 @@ const FlightHistoryPage = () => {
                         {item.flight.arrivalAirport}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        ${item.price.toFixed(2)}
+                        {item.price.toFixed(2)} VND
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span

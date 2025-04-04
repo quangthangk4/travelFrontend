@@ -184,7 +184,6 @@ export const confirmPayment = async (flight, navigate) => {
       }
     );
 
-    
     toast.success(response.data.message + "!");
     if (response.data) alert(response.data.message);
     if (response.data.code === 1000) navigate("/");
