@@ -23,6 +23,7 @@ const SearchFlight = ({
   const [departFrom, setDepartFrom] = useState(defaultFrom);
   const [returnFrom, setReturnFrom] = useState(defaultTo);
   const flight = useSelector((state) => state.trip.flight); // Lấy state từ Redux
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const dispatch = useDispatch(); // Lấy dispatch để cập nhật state
   const [isPopupOpen, setIsPopupOpen] = useState(false);
@@ -75,7 +76,7 @@ const SearchFlight = ({
 
   useEffect(() => {
     axios
-      .get("http://localhost:8080/airports/vietnam")
+      .get(`${API_BASE_URL}/airports/vietnam`)
       .then((response) => {
         if (response.data && response.data.result) {
           setAirport(response.data.result);

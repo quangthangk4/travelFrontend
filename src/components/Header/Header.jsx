@@ -9,6 +9,8 @@ import axiosInstance from "../Api/axiosClient";
 const Header = ({ isLoggedIn, role }) => {
   const navigate = useNavigate();
 
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
   // Xử lý logout
   const handleLogout = async () => {
     const token = getAuthWithExpiry("token");
@@ -16,7 +18,7 @@ const Header = ({ isLoggedIn, role }) => {
     if (!token) return;
 
     try {
-      await axiosInstance.post("http://localhost:8080/auth/logout", { token });
+      await axiosInstance.post(`${API_BASE_URL}/auth/logout`, { token });
 
       // Xóa token sau khi logout thành công
       localStorage.removeItem("token");
@@ -64,7 +66,10 @@ const Header = ({ isLoggedIn, role }) => {
                 <NavLink to="/aircraft" className="mx-3 hover:text-blue-700">
                   Aircraft
                 </NavLink>
-                <NavLink to="/flight-admin" className="mx-3 hover:text-blue-700">
+                <NavLink
+                  to="/flight-admin"
+                  className="mx-3 hover:text-blue-700"
+                >
                   Flight Control
                 </NavLink>
               </>

@@ -99,6 +99,8 @@ const SeatMap = () => {
   const handleBookedTicket = () => {
     // vé 1 chiều
     if (!flight.isRoundTrip) {
+      console.log("vào đây nè");
+      ``;
       dispatch(
         updateFlight({
           seatPriceArrival:
@@ -106,7 +108,9 @@ const SeatMap = () => {
           seatNumberArrival: selectedSeat,
         })
       );
-      confirmPayment(flight, navigate);
+      const newFlight = { ...flight, seatNumberArrival: selectedSeat };
+
+      confirmPayment(newFlight, navigate);
       return;
     } else {
       // vé khứ hồi, nhưng thông tin vé đi

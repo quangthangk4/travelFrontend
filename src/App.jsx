@@ -5,7 +5,7 @@ import {
   BrowserRouter as Router,
   Routes,
 } from "react-router-dom";
-import { ToastContainer } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { PersistGate } from "redux-persist/integration/react";
 import "./App.css";
@@ -34,11 +34,6 @@ function App() {
 
   return (
     <Provider store={store}>
-      <ToastContainer
-        className="toast-position"
-        position="top-right"
-        autoClose={5000}
-      />
       <PersistGate loading={null} persistor={persistor}>
         <Router>
           <Routes>
@@ -106,6 +101,12 @@ function App() {
               </Route>
             </Route>
           </Routes>
+              <ToastContainer
+                className="toast-position"
+                position="top-right"
+                autoClose={5000}
+              
+              />
         </Router>
       </PersistGate>
     </Provider>

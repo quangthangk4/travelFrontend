@@ -13,6 +13,7 @@ const FlightHistoryPage = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   // {
   //   id: 1,
@@ -29,7 +30,7 @@ const FlightHistoryPage = () => {
     const fetchMyFlights = async () => {
       try {
         const response = await axiosInstance.get(
-          "http://localhost:8080/tickets/getMyTickets",
+          `${API_BASE_URL}/tickets/getMyTickets`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

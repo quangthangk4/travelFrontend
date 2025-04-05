@@ -19,6 +19,7 @@ const SignUp = () => {
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const validateForm = () => {
     const newErrors = {};
@@ -50,7 +51,7 @@ const SignUp = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:8080/user/create",
+        `${API_BASE_URL}/user/create`,
         formData
       );
       alert("Registration successful! Redirecting to login...");

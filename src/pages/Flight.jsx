@@ -28,10 +28,11 @@ import { resetFlight, updateFlight } from "../store/tripSlice";
 import { getAuthWithExpiry } from "../auth/manageToken";
 
 const FlightMap = ({ from, to }) => {
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const [coordinates, setCoordinates] = useState({});
   useEffect(() => {
     axios
-      .get("http://localhost:8080/airports/vietnam")
+      .get(`${API_BASE_URL}/airports/vietnam`)
       .then((response) => {
         if (response.data.code == "1000" && response.data.result) {
           setCoordinates(
@@ -374,6 +375,7 @@ const Flight = () => {
   const flight = useSelector((state) => state.trip.flight);
 
   const [isSecond, setIsSecond] = useState(false);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -386,13 +388,13 @@ const Flight = () => {
       try {
         let response;
         if (!isSecond) {
-          response = await axios.post("http://localhost:8080/flight/search", {
+          response = await axios.post(`${API_BASE_URL}/flight/search`, {
             departureAirport: from,
             arrivalAirport: to,
             departureDate: departDateString,
           });
         } else {
-          response = await axios.post("http://localhost:8080/flight/search", {
+          response = await axios.post(`${API_BASE_URL}/flight/search`, {
             departureAirport: to,
             arrivalAirport: from,
             departureDate: returnDateString,

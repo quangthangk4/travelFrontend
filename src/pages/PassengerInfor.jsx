@@ -105,6 +105,7 @@ const PassengerInfor = () => {
   const flight = useSelector((state) => state.trip.flight);
   const [userInfo, setUserInfo] = useState(null);
   const [isSecond, setIsSecond] = useState(false);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -219,7 +220,7 @@ const PassengerInfor = () => {
       }
 
       const response = await axiosInstance.get(
-        "http://localhost:8080/user/getMyInfo",
+        `${API_BASE_URL}/user/getMyInfo`,
         {
           headers: {
             Authorization: `Bearer ${token}`, // Thêm token vào header

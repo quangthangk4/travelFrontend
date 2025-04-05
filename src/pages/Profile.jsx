@@ -11,6 +11,7 @@ const ProfilePage = () => {
 
   const [currentUser, setCurrentUser] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const [editedUser, setEditedUser] = useState({
     firstName: "",
     lastName: "",
@@ -25,7 +26,7 @@ const ProfilePage = () => {
     const fetchUserInfo = async () => {
       try {
         const response = await axiosInstance.get(
-          "http://localhost:8080/user/getMyInfo",
+          `${API_BASE_URL}/user/getMyInfo`,
           {
             headers: {
               Authorization: `Bearer ${getAuthWithExpiry("token")}`,
@@ -57,7 +58,7 @@ const ProfilePage = () => {
 
   const handleSave = async () => {
     try {
-      await axiosInstance.put("http://localhost:8080/user/update", editedUser, {
+      await axiosInstance.put(`${API_BASE_URL}/user/update`, editedUser, {
         headers: {
           Authorization: `Bearer ${getAuthWithExpiry("token")}`,
           "Content-Type": "application/json",

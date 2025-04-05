@@ -22,11 +22,12 @@ const Airline = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedAirline, setSelectedAirline] = useState(null);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const fetchAirlines = async () => {
     try {
       const response = await axiosInstance.get(
-        "http://localhost:8080/airline/getAllAirline",
+        `${API_BASE_URL}/airline/getAllAirline`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -65,7 +66,7 @@ const Airline = () => {
     try {
       // create airlines
       const response = await axiosInstance.post(
-        "http://localhost:8080/airline/create",
+        `${API_BASE_URL}/airline/create`,
         formData,
         {
           headers: {
@@ -95,7 +96,7 @@ const Airline = () => {
     setIsLoading(true);
     try {
       const response = await axiosInstance.delete(
-        `http://localhost:8080/airline/delete/${id}`,
+        `${API_BASE_URL}/airline/delete/${id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

@@ -11,6 +11,7 @@ const SignIn = () => {
   const navigate = useNavigate();
 
   const SECRET_KEY = import.meta.env.VITE_SECRET_KEY; // lấy từ biến môi trường  ra
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const decryptPassword = (encryptedPassword) => {
     try {
@@ -57,13 +58,10 @@ const SignIn = () => {
     setError("");
 
     try {
-      const response = await axios.post(
-        "http://localhost:8080/auth/authenticate",
-        {
-          email: formData.email,
-          password: formData.password,
-        }
-      );
+      const response = await axios.post(`${API_BASE_URL}/auth/authenticate`, {
+        email: formData.email,
+        password: formData.password,
+      });
 
       if (response.data.code === 1000) {
         const token = response.data.result.token;

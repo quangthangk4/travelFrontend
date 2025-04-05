@@ -9,10 +9,9 @@ const DepositPage = () => {
   const [amount, setAmount] = useState("");
   const token = getAuthWithExpiry("token");
   const [loading, setLoading] = useState(false);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const [recentDeposits, setRecentDeposits] = useState([
-    { id: 1, amount: 5000, date: "2024-01-20", status: "success" },
-    { id: 2, amount: 10000, date: "2024-01-19", status: "success" },
-    { id: 3, amount: 50000, date: "2024-01-18", status: "success" },
+    
   ]);
 
   const [userData, setUserData] = useState({});
@@ -21,7 +20,7 @@ const DepositPage = () => {
     const fetchUserInfo = async () => {
       try {
         const response = await axiosInstance.get(
-          "http://localhost:8080/user/getMyInfo",
+          `${API_BASE_URL}/user/getMyInfo`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -74,7 +73,7 @@ const DepositPage = () => {
     setLoading(true);
     try {
       const response = await axiosInstance.put(
-        `http://localhost:8080/user/deposit/${amount}`,
+        `${API_BASE_URL}/user/deposit/${amount}`,
         {},
         {
           headers: {
