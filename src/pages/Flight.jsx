@@ -9,10 +9,10 @@ import {
   TileLayer,
   useMap,
 } from "react-leaflet";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import avatarAir from "../assets/images/avatarAir.svg";
 import picture2 from "../assets/images/image-1.png";
 import picture3 from "../assets/images/image-2.png";
@@ -20,12 +20,12 @@ import picture1 from "../assets/images/image.png";
 import place1 from "../assets/images/place1.png";
 import place2 from "../assets/images/place2.png";
 import place3 from "../assets/images/place3.png";
+import { getAuthWithExpiry } from "../auth/manageToken";
 import BookingInfo from "../components/BookingInfo/BookingInfo";
 import Button from "../components/Button/Button";
 import Cart from "../components/Cart/Cart";
 import SearchFlight from "../components/SearchFlight/SearchFlight";
-import { resetFlight, updateFlight } from "../store/tripSlice";
-import { getAuthWithExpiry } from "../auth/manageToken";
+import { updateFlight } from "../store/tripSlice";
 
 const FlightMap = ({ from, to }) => {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -574,7 +574,6 @@ const Flight = () => {
         </div>
         <Button onClick={handleContinue} text={"Đi tiếp"} />
       </div>
-      <ToastContainer position="top-right" autoClose={3000} />
     </div>
   );
 };

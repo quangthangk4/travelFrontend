@@ -5,7 +5,7 @@ import {
   BrowserRouter as Router,
   Routes,
 } from "react-router-dom";
-import { toast, ToastContainer } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { PersistGate } from "redux-persist/integration/react";
 import "./App.css";
@@ -22,7 +22,7 @@ import HomePage from "./pages/HomePage";
 import PassengerInfor from "./pages/PassengerInfor";
 import Profile from "./pages/Profile";
 import SeatMap from "./pages/SeatMap";
-import Aircraft from "./pages/admin/AirCraft";
+// import Aircraft from "./pages/admin/AirCraft";
 import FlightAdmin from "./pages/admin/FlightAdmin";
 import Airline from "./pages/admin/airline";
 import store, { persistor } from "./store/store";
@@ -36,6 +36,11 @@ function App() {
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
         <Router>
+          <ToastContainer
+            className="toast-position"
+            position="top-right"
+            autoClose={5000}
+          />
           <Routes>
             <Route
               path="/"
@@ -101,12 +106,6 @@ function App() {
               </Route>
             </Route>
           </Routes>
-              <ToastContainer
-                className="toast-position"
-                position="top-right"
-                autoClose={5000}
-              
-              />
         </Router>
       </PersistGate>
     </Provider>

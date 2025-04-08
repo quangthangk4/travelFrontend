@@ -16,7 +16,6 @@ import {
 import BookingInfo from "../components/BookingInfo/BookingInfo";
 import Button from "../components/Button/Button";
 import { updateFlight } from "../store/tripSlice";
-import { set } from "date-fns";
 
 const SeatMap = () => {
   const [occupiedSeats, setOccupiedSeats] = useState([]);
@@ -371,15 +370,21 @@ const SeatMap = () => {
           <p className="font-semibold">Tổng tiền</p>
           <p className="font-semibold italic text-2xl">
             {(
-              (flight.departFlight?.basePrice || 0) +
-                (flight.returnFlight?.basePrice || 0) +
-                Number(flight.luggageArrival) +
-                Number(flight.luggageReturn) +
-                Number(flight.seatPriceArrival) +
+              Number(flight.departFlight?.basePrice) +
+              Number(flight.returnFlight?.basePrice || 0) +
+              Number(flight.luggageArrival) +
+              Number(flight.luggageReturn) +
+              (Number(flight.seatPriceArrival) ||
                 Number(
                   Number(seatLevelPrice) +
                     Number(NearByWindowSeat(selectedSeat))
-                ) || Number(flight.seatPriceReturn)
+                )) +
+              (isSecond &&
+                (Number(flight.seatPriceReturn) ||
+                  Number(
+                    Number(seatLevelPrice) +
+                      Number(NearByWindowSeat(selectedSeat))
+                  )))
             ).toLocaleString("vi-VN")}{" "}
             VND
           </p>

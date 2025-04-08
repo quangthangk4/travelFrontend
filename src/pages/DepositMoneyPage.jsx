@@ -1,6 +1,5 @@
-import axios from "axios";
 import { useEffect, useState } from "react";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { getAuthWithExpiry } from "../auth/manageToken";
 import axiosInstance from "../components/Api/axiosClient";
@@ -185,7 +184,6 @@ const DepositPage = () => {
           </div>
         </div>
       </div>
-      <ToastContainer position="top-right" autoClose={3000} />
     </div>
   );
 };
